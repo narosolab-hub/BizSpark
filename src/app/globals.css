@@ -11,10 +11,17 @@ body {
     Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* 스크롤바 스타일링 */
+/* 모바일 최적화된 스크롤바 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
+}
+
+@media (min-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 }
 
 ::-webkit-scrollbar-track {
@@ -68,7 +75,7 @@ body {
   animation: gradient-shift 3s ease infinite;
 }
 
-/* 포커스 아웃라인 제거 (접근성 유지) */
+/* 포커스 아웃라인 (접근성 + 모바일 최적화) */
 *:focus {
   outline: none;
 }
@@ -88,4 +95,94 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* 모바일 터치 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  /* 터치 디바이스에서 호버 효과 비활성화 */
+  button:hover,
+  a:hover {
+    opacity: 1;
+  }
+  
+  /* 터치 하이라이트 제거 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* 모바일에서 더 나은 버튼 터치 영역 */
+@media (max-width: 640px) {
+  button,
+  a[role="button"] {
+    min-height: 44px; /* iOS 권장 최소 터치 영역 */
+  }
+}
+
+/* 세이프 에어리어 지원 (노치가 있는 디바이스) */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* 스켈레톤 로딩 애니메이션 */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+/* 커스텀 스크롤 컨테이너 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+/* 반응형 텍스트 크기 유틸리티 */
+@layer utilities {
+  .text-responsive {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  }
+  
+  .text-responsive-lg {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+  }
+  
+  .text-responsive-xl {
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+  }
+}
+
+/* 다크모드 최적화 */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* 접근성: 애니메이션 감소 설정 존중 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
