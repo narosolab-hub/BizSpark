@@ -303,7 +303,7 @@ export default function ReportView({ report }: ReportViewProps) {
                     {week.replace('week', 'Week ')}
                   </h4>
                   <ul className="space-y-2">
-                    {tasks.map((task: any, idx: number) => (
+                    {tasks?.map((task: any, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="w-5 h-5 rounded bg-violet-100 text-violet-600 flex items-center justify-center text-xs mt-0.5">
                           {idx + 1}
