@@ -155,7 +155,7 @@ export async function analyzeBusinessIdea(
     const prompt = createAnalysisPrompt(keyword, trendData, newsData);
 
     console.log('[GEMINI] Starting analysis for:', keyword);
-    console.log('[GEMINI] Using model: gemini-pro');
+    console.log('[GEMINI] Using model: gemini-2.0-flash');
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
