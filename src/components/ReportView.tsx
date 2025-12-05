@@ -297,7 +297,7 @@ export default function ReportView({ report }: ReportViewProps) {
           {/* 30일 로드맵 */}
           <Section title="30일 실행 로드맵" icon={<Calendar className="w-5 h-5" />}>
             <div className="space-y-6">
-              {Object.entries(analysis.roadmap).map(([week, tasks]: [string, string[]]) => (
+              {(Object.entries(analysis.roadmap) as [string, string[]][]).map(([week, tasks]) => (
                 <div key={week}>
                   <h4 className="font-semibold text-gray-900 mb-3 capitalize">
                     {week.replace('week', 'Week ')}
