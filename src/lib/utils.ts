@@ -9,19 +9,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * N개월 전 날짜 반환 (YYYYMMDD 형식)
+ * N개월 전 날짜 반환 (YYYY-MM-DD 형식)
  */
 export function getDateMonthsAgo(months: number): string {
   const date = new Date();
   date.setMonth(date.getMonth() - months);
-  return date.toISOString().split('T')[0].replace(/-/g, '');
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식 유지
 }
 
 /**
- * 오늘 날짜 반환 (YYYYMMDD 형식)
+ * 오늘 날짜 반환 (YYYY-MM-DD 형식)
  */
 export function getTodayDate(): string {
-  return new Date().toISOString().split('T')[0].replace(/-/g, '');
+  return new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식 유지
 }
 
 /**
@@ -81,6 +81,20 @@ export function handleAPIError(error: unknown) {
 
   if (error instanceof APIError) {
     return { error: error.message, statusCode: error.statusCode };
+  }
+
+  // Gemini API 할당량 초과 에러 처리
+  if (error && typeof error === 'object' && 'status' in error) {
+    const err = error as any;
+    if (err.status === 429) {
+      const message = err.message || '';
+      if (message.includes('quota') || message.includes('Quota exceeded')) {
+        return {
+          error: 'Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요. (약 1분 대기 필요)',
+          statusCode: 429,
+        };
+      }
+    }
   }
 
   return { error: 'Internal Server Error', statusCode: 500 };
