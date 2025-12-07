@@ -167,6 +167,16 @@ body {
   .text-responsive-xl {
     font-size: clamp(1.25rem, 3vw, 1.5rem);
   }
+  
+  /* 스크롤바 숨기기 (모바일 가로 스크롤용) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* 다크모드 최적화 */

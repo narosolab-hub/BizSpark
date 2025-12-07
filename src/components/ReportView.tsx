@@ -17,6 +17,7 @@ import {
   Calendar,
   AlertTriangle,
   ArrowLeft,
+  Menu,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,26 +36,26 @@ function Section({ title, icon, children, defaultOpen = false }: SectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+        className="w-full px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between hover:bg-gray-50/50 active:bg-gray-100/50 transition-colors touch-manipulation"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center text-violet-600">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center text-violet-600 flex-shrink-0">
             {icon}
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{title}</h2>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
+          <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
+          <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
         )}
       </button>
       {isOpen && (
-        <div className="px-6 pb-6 border-t border-gray-100">
-          <div className="pt-5">{children}</div>
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-t border-gray-100">
+          <div className="pt-4 sm:pt-5">{children}</div>
         </div>
       )}
     </div>
@@ -63,103 +64,150 @@ function Section({ title, icon, children, defaultOpen = false }: SectionProps) {
 
 export default function ReportView({ report }: ReportViewProps) {
   const { keyword, analysis_result: analysis, created_at } = report;
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      alert('링크가 복사되었습니다!');
+      if (navigator.share) {
+        // 모바일 네이티브 공유
+        await navigator.share({
+          title: `"${keyword}" 시장 분석 리포트`,
+          text: 'BizSpark AI 분석 리포트를 확인해보세요',
+          url: window.location.href,
+        });
+      } else {
+        // 폴백: 클립보드 복사
+        await navigator.clipboard.writeText(window.location.href);
+        alert('링크가 복사되었습니다!');
+      }
     } catch {
       alert('링크 복사에 실패했습니다.');
     }
   };
 
   const handleDownloadPDF = () => {
-    // TODO: PDF 다운로드 구현
     alert('PDF 다운로드 기능은 준비 중입니다.');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-violet-50/30">
-      {/* 헤더 */}
+      {/* 헤더 - 모바일 최적화 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             <Link
               href="/"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 text-gray-600 hover:text-gray-900 active:text-gray-900 transition-colors min-w-0"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>새 분석</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="text-sm sm:text-base truncate">새 분석</span>
             </Link>
-            <div className="flex items-center gap-2">
+            
+            {/* 데스크톱 버튼들 */}
+            <div className="hidden sm:flex items-center gap-2">
               <button
                 onClick={handleShare}
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                title="공유하기"
               >
                 <Share2 className="w-5 h-5" />
               </button>
               <button
                 onClick={handleDownloadPDF}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 transition-colors"
               >
                 <Download className="w-4 h-4" />
                 PDF 다운로드
               </button>
             </div>
+            
+            {/* 모바일 메뉴 버튼 */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="sm:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
+          
+          {/* 모바일 드롭다운 메뉴 */}
+          {showMobileMenu && (
+            <div className="sm:hidden mt-3 pb-2 space-y-2 border-t border-gray-100 pt-3">
+              <button
+                onClick={() => {
+                  handleShare();
+                  setShowMobileMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                공유하기
+              </button>
+              <button
+                onClick={() => {
+                  handleDownloadPDF();
+                  setShowMobileMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 text-sm transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                PDF 다운로드
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* 리포트 헤더 */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-sm mb-4">
-            <TrendingUp className="w-4 h-4" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* 리포트 헤더 - 모바일 최적화 */}
+        <div className="text-center mb-6 sm:mb-10">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs sm:text-sm mb-3 sm:mb-4">
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             시장 분석 리포트
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            &ldquo;{keyword}&rdquo;
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 break-words px-2">
+            "{keyword}"
           </h1>
-          <p className="text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500">
             {formatDate(created_at)} 생성
           </p>
         </div>
 
-        {/* 섹션들 */}
-        <div className="space-y-4">
+        {/* 섹션들 - 모바일 최적화 */}
+        <div className="space-y-3 sm:space-y-4">
           {/* 시장 개요 */}
           <Section
             title="시장 개요"
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />}
             defaultOpen={true}
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">정의</h4>
-                <p className="text-gray-700">{analysis.marketOverview.definition}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">정의</h4>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.marketOverview.definition}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">시장 규모</h4>
-                <p className="text-gray-700">{analysis.marketOverview.marketSize}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">시장 규모</h4>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.marketOverview.marketSize}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">트렌드</h4>
-                <p className="text-gray-700">{analysis.marketOverview.trend}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">트렌드</h4>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.marketOverview.trend}</p>
               </div>
             </div>
           </Section>
 
           {/* 타겟 고객 */}
-          <Section title="타겟 고객" icon={<Users className="w-5 h-5" />}>
-            <div className="space-y-6">
+          <Section title="타겟 고객" icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <div className="space-y-4 sm:space-y-6">
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">고객 세그먼트</h4>
-                <div className="flex flex-wrap gap-2">
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">고객 세그먼트</h4>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {analysis.targetCustomers.segments.map((segment, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm"
+                      className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-violet-100 text-violet-700 text-xs sm:text-sm"
                     >
                       {segment}
                     </span>
@@ -167,12 +215,12 @@ export default function ReportView({ report }: ReportViewProps) {
                 </div>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">페인포인트</h4>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">페인포인트</h4>
                 <ul className="space-y-2">
                   {analysis.targetCustomers.painPoints.map((pain, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="text-red-500 mt-1">•</span>
-                      <span className="text-gray-700">{pain}</span>
+                      <span className="text-red-500 mt-0.5 flex-shrink-0">•</span>
+                      <span className="text-sm sm:text-base text-gray-700 leading-relaxed">{pain}</span>
                     </li>
                   ))}
                 </ul>
@@ -181,24 +229,24 @@ export default function ReportView({ report }: ReportViewProps) {
           </Section>
 
           {/* 경쟁 환경 */}
-          <Section title="경쟁 환경" icon={<Target className="w-5 h-5" />}>
-            <div className="space-y-4">
+          <Section title="경쟁 환경" icon={<Target className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <div className="space-y-3 sm:space-y-4">
               {analysis.competitors.map((competitor, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-xl bg-gray-50 border border-gray-100"
+                  className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-100"
                 >
-                  <h4 className="font-semibold text-gray-900 mb-3">
+                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3">
                     {competitor.name}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                     <div>
                       <span className="text-green-600 font-medium">강점:</span>
-                      <p className="text-gray-600 mt-1">{competitor.strength}</p>
+                      <p className="text-gray-600 mt-1 leading-relaxed">{competitor.strength}</p>
                     </div>
                     <div>
                       <span className="text-red-600 font-medium">약점:</span>
-                      <p className="text-gray-600 mt-1">{competitor.weakness}</p>
+                      <p className="text-gray-600 mt-1 leading-relaxed">{competitor.weakness}</p>
                     </div>
                   </div>
                 </div>
@@ -209,24 +257,24 @@ export default function ReportView({ report }: ReportViewProps) {
           {/* 사업 아이디어 */}
           <Section
             title="사업 아이디어 제안"
-            icon={<Lightbulb className="w-5 h-5" />}
+            icon={<Lightbulb className="w-4 h-4 sm:w-5 sm:h-5" />}
             defaultOpen={true}
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {analysis.businessIdeas.map((idea, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    'p-5 rounded-xl border-2',
+                    'p-4 sm:p-5 rounded-lg sm:rounded-xl border-2',
                     idx === 0
                       ? 'bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-200'
                       : 'bg-white border-gray-100'
                   )}
                 >
-                  <div className="flex items-start gap-3 mb-3">
+                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
                     <span
                       className={cn(
-                        'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
+                        'w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0',
                         idx === 0
                           ? 'bg-violet-600 text-white'
                           : 'bg-gray-200 text-gray-600'
@@ -234,12 +282,12 @@ export default function ReportView({ report }: ReportViewProps) {
                     >
                       {idx + 1}
                     </span>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{idea.title}</h4>
-                      <p className="text-sm text-gray-500 mt-1">{idea.description}</p>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-sm sm:text-base text-gray-900">{idea.title}</h4>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">{idea.description}</p>
                     </div>
                   </div>
-                  <div className="ml-11 space-y-2 text-sm">
+                  <div className="ml-8 sm:ml-11 space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                     <div>
                       <span className="font-medium text-violet-600">USP:</span>
                       <span className="text-gray-600 ml-2">{idea.usp}</span>
@@ -255,13 +303,13 @@ export default function ReportView({ report }: ReportViewProps) {
           </Section>
 
           {/* MVP 기능 */}
-          <Section title="MVP 기능 리스트" icon={<Rocket className="w-5 h-5" />}>
-            <ul className="space-y-3">
+          <Section title="MVP 기능 리스트" icon={<Rocket className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <ul className="space-y-2 sm:space-y-3">
               {analysis.mvpFeatures.map((feature, idx) => (
-                <li key={idx} className="flex items-center gap-3">
+                <li key={idx} className="flex items-center gap-2 sm:gap-3">
                   <span
                     className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium',
+                      'w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0',
                       idx < 3
                         ? 'bg-violet-600 text-white'
                         : 'bg-gray-200 text-gray-600'
@@ -269,9 +317,9 @@ export default function ReportView({ report }: ReportViewProps) {
                   >
                     {idx + 1}
                   </span>
-                  <span className="text-gray-700">{feature}</span>
+                  <span className="text-sm sm:text-base text-gray-700 leading-relaxed">{feature}</span>
                   {idx < 3 && (
-                    <span className="px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-600">
+                    <span className="px-2 py-0.5 text-xs rounded bg-violet-100 text-violet-600 whitespace-nowrap">
                       우선순위
                     </span>
                   )}
@@ -281,34 +329,34 @@ export default function ReportView({ report }: ReportViewProps) {
           </Section>
 
           {/* 비즈니스 모델 */}
-          <Section title="비즈니스 모델" icon={<DollarSign className="w-5 h-5" />}>
-            <div className="space-y-4">
+          <Section title="비즈니스 모델" icon={<DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">모델 유형</h4>
-                <p className="text-gray-700">{analysis.businessModel.type}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">모델 유형</h4>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.businessModel.type}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">가격 정책</h4>
-                <p className="text-gray-700">{analysis.businessModel.pricing}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">가격 정책</h4>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.businessModel.pricing}</p>
               </div>
             </div>
           </Section>
 
           {/* 30일 로드맵 */}
-          <Section title="30일 실행 로드맵" icon={<Calendar className="w-5 h-5" />}>
-            <div className="space-y-6">
+          <Section title="30일 실행 로드맵" icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <div className="space-y-4 sm:space-y-6">
               {(Object.entries(analysis.roadmap) as [string, string[]][]).map(([week, tasks]) => (
                 <div key={week}>
-                  <h4 className="font-semibold text-gray-900 mb-3 capitalize">
+                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3 capitalize">
                     {week.replace('week', 'Week ')}
                   </h4>
                   <ul className="space-y-2">
                     {tasks?.map((task: any, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded bg-violet-100 text-violet-600 flex items-center justify-center text-xs mt-0.5">
+                        <span className="w-5 h-5 rounded bg-violet-100 text-violet-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
                           {idx + 1}
                         </span>
-                        <span className="text-gray-600">{task}</span>
+                        <span className="text-xs sm:text-sm text-gray-600 leading-relaxed">{task}</span>
                       </li>
                     ))}
                   </ul>
@@ -318,18 +366,18 @@ export default function ReportView({ report }: ReportViewProps) {
           </Section>
 
           {/* 리스크 분석 */}
-          <Section title="리스크 & 대응" icon={<AlertTriangle className="w-5 h-5" />}>
-            <div className="space-y-4">
+          <Section title="리스크 & 대응" icon={<AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />}>
+            <div className="space-y-3 sm:space-y-4">
               {analysis.risks.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-xl bg-amber-50/50 border border-amber-100"
+                  className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-amber-50/50 border border-amber-100"
                 >
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">{item.risk}</h4>
-                      <p className="text-sm text-gray-600 mt-1">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-sm sm:text-base text-gray-900">{item.risk}</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
                         <span className="font-medium text-green-600">대응:</span>{' '}
                         {item.solution}
                       </p>
@@ -344,4 +392,3 @@ export default function ReportView({ report }: ReportViewProps) {
     </div>
   );
 }
-
