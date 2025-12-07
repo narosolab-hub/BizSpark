@@ -8,6 +8,25 @@ import { APIError, handleAPIError } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
+    // 환경 변수 체크
+    const requiredEnvVars = {
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    };
+
+    const missingEnvVars = Object.entries(requiredEnvVars)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingEnvVars.length > 0) {
+      console.error('[ANALYZE] Missing environment variables:', missingEnvVars);
+      return NextResponse.json(
+        { error: '서버 설정 오류가 발생했습니다. 관리자에게 문의해주세요.' },
+        { status: 500 }
+      );
+    }
+
     const { keyword } = await request.json();
 
     // 입력 검증
@@ -86,8 +105,23 @@ export async function POST(request: NextRequest) {
       status: 'completed',
     });
   } catch (error) {
+    console.error('[ANALYZE] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    });
+    
     const { error: errorMessage, statusCode } = handleAPIError(error);
-    return NextResponse.json({ error: errorMessage }, { status: statusCode });
+    return NextResponse.json(
+      { 
+        error: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && error instanceof Error ? {
+          details: error.message,
+          stack: error.stack,
+        } : {}),
+      }, 
+      { status: statusCode }
+    );
   }
 }
 
