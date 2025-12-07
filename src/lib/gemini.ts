@@ -172,8 +172,14 @@ export async function analyzeBusinessIdea(
 
     console.log('[GEMINI] Analysis completed successfully');
     return analysis;
-  } catch (error) {
-    console.error('[GEMINI] API Error:', error);
+  } catch (error: any) {
+    console.error('[GEMINI] API Error:', {
+      message: error?.message,
+      status: error?.status || error?.response?.status,
+      statusText: error?.statusText || error?.response?.statusText,
+      details: error?.response?.data || error?.details,
+      stack: error?.stack,
+    });
     throw error;
   }
 }

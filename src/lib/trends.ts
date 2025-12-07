@@ -17,10 +17,21 @@ export async function getGoogleTrends(keyword: string): Promise<GoogleTrendData 
       geo: 'KR',
     });
 
-    console.log('[GOOGLE] Trends data received');
-    return JSON.parse(result);
-  } catch (error) {
-    console.error('[GOOGLE] Trends Error:', error);
+    if (!result || typeof result !== 'string') {
+      console.warn('[GOOGLE] Invalid response format');
+      return null;
+    }
+
+    console.log('[GOOGLE] Trends data received, parsing JSON...');
+    const parsed = JSON.parse(result);
+    console.log('[GOOGLE] Trends data parsed successfully');
+    return parsed;
+  } catch (error: any) {
+    console.error('[GOOGLE] Trends Error:', {
+      message: error?.message,
+      stack: error?.stack,
+      response: typeof error?.response === 'string' ? error.response.substring(0, 200) : error?.response,
+    });
     return null;
   }
 }

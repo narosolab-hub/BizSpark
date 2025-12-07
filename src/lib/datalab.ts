@@ -26,18 +26,28 @@ export async function getNaverTrends(keyword: string): Promise<NaverTrendData | 
   try {
     console.log('[NAVER] Fetching trends for:', keyword);
 
+    if (!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET) {
+      console.warn('[NAVER] API keys not configured, skipping trends fetch');
+      return null;
+    }
+
     const response = await axios.post(url, body, {
       headers: {
-        'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID!,
-        'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET!,
+        'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID,
+        'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET,
         'Content-Type': 'application/json',
       },
     });
 
     console.log('[NAVER] Trends data received');
     return response.data;
-  } catch (error) {
-    console.error('[NAVER] DataLab API Error:', error);
+  } catch (error: any) {
+    console.error('[NAVER] DataLab API Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+    });
     return null;
   }
 }
@@ -51,14 +61,24 @@ export async function getNaverNews(keyword: string) {
   try {
     console.log('[NAVER] Fetching news for:', keyword);
 
+    if (!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET) {
+      console.warn('[NAVER] API keys not configured, skipping news fetch');
+      return [];
+    }
+
     const response = await axios.get(url, {
       headers: {
-        'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID!,
-        'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET!,
+        'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID,
+        'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET,
       },
     });
 
-    console.log('[NAVER] News data received');
+    console.log('[NAVER] News data received, items:', response.data.items?.length || 0);
+
+    if (!response.data.items || !Array.isArray(response.data.items)) {
+      console.warn('[NAVER] Invalid news response format');
+      return [];
+    }
 
     return response.data.items.map((item: { title: string; description: string; link: string; pubDate: string }) => ({
       title: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
@@ -66,8 +86,13 @@ export async function getNaverNews(keyword: string) {
       url: item.link,
       publishedAt: item.pubDate,
     }));
-  } catch (error) {
-    console.error('[NAVER] News API Error:', error);
+  } catch (error: any) {
+    console.error('[NAVER] News API Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+    });
     return [];
   }
 }

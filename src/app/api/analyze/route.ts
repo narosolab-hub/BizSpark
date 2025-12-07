@@ -46,28 +46,71 @@ export async function POST(request: NextRequest) {
 
     console.log('[ANALYZE] Starting analysis for:', keyword);
 
-    // 1. 데이터 수집 (병렬 처리)
-    const [naverTrends, googleTrends, naverNews] = await Promise.all([
-      getNaverTrends(keyword),
-      getGoogleTrends(keyword),
-      getNaverNews(keyword),
-    ]);
+    // 1. 데이터 수집 (병렬 처리, 개별 에러 핸들링)
+    let naverTrends = null;
+    let googleTrends = null;
+    let naverNews: any[] = [];
+
+    try {
+      const results = await Promise.allSettled([
+        getNaverTrends(keyword).catch((err) => {
+          console.error('[ANALYZE] Naver trends failed:', err);
+          return null;
+        }),
+        getGoogleTrends(keyword).catch((err) => {
+          console.error('[ANALYZE] Google trends failed:', err);
+          return null;
+        }),
+        getNaverNews(keyword).catch((err) => {
+          console.error('[ANALYZE] Naver news failed:', err);
+          return [];
+        }),
+      ]);
+
+      naverTrends = results[0].status === 'fulfilled' ? results[0].value : null;
+      googleTrends = results[1].status === 'fulfilled' ? results[1].value : null;
+      naverNews = results[2].status === 'fulfilled' ? results[2].value : [];
+    } catch (error) {
+      console.error('[ANALYZE] Data collection error:', error);
+      // 데이터 수집 실패해도 계속 진행
+    }
+
+    console.log('[ANALYZE] Data collection completed:', {
+      hasNaverTrends: !!naverTrends,
+      hasGoogleTrends: !!googleTrends,
+      naverNewsCount: naverNews.length,
+    });
 
     // 2. 뉴스 통합
-    const newsData = await getIntegratedNews(keyword, naverNews);
+    let newsData: any[] = [];
+    try {
+      newsData = await getIntegratedNews(keyword, naverNews);
+      console.log('[ANALYZE] News integration completed, count:', newsData.length);
+    } catch (error) {
+      console.error('[ANALYZE] News integration failed:', error);
+      newsData = naverNews; // Naver 뉴스라도 사용
+    }
 
     // 3. AI 분석
-    const analysis = await analyzeBusinessIdea(
-      keyword,
-      {
-        naver: naverTrends || undefined,
-        google: googleTrends || undefined,
-      },
-      newsData
-    );
+    console.log('[ANALYZE] Starting AI analysis...');
+    let analysis;
+    try {
+      analysis = await analyzeBusinessIdea(
+        keyword,
+        {
+          naver: naverTrends || undefined,
+          google: googleTrends || undefined,
+        },
+        newsData
+      );
 
-    if (!analysis) {
-      throw new APIError(500, 'AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      if (!analysis) {
+        throw new APIError(500, 'AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+      console.log('[ANALYZE] AI analysis completed successfully');
+    } catch (error) {
+      console.error('[ANALYZE] AI analysis failed:', error);
+      throw error;
     }
 
     // 4. DB 저장
