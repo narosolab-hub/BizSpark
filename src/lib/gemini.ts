@@ -149,14 +149,14 @@ export async function analyzeBusinessIdea(
   }
 
   try {
-    // 무료 티어에서 지원되는 모델 사용
-    // gemini-1.5-flash는 안정적이고 무료 티어에서 지원됨
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // 안정적인 모델 사용 (v1 API 지원)
+    // gemini-pro는 가장 안정적이고 무료 티어에서 지원됨
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = createAnalysisPrompt(keyword, trendData, newsData);
 
     console.log('[GEMINI] Starting analysis for:', keyword);
-    console.log('[GEMINI] Using model: gemini-1.5-flash (free tier supported)');
+    console.log('[GEMINI] Using model: gemini-pro (stable, free tier supported)');
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
