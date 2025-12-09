@@ -6,6 +6,7 @@ export async function GET() {
     const supabase = createClient();
     // 최신 리포트부터 가져오기 (created_at 기준 내림차순)
     // 성능 최적화: 최근 50개만 가져오기 (필요시 증가 가능)
+    // 모든 사용자가 모든 리포트를 볼 수 있도록 RLS 정책 무시 (서버 사이드)
     const { data: reports, error } = await supabase
       .from('reports')
       .select('id, keyword, created_at')

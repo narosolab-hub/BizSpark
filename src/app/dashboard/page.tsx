@@ -183,12 +183,8 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (response.ok && data.reportId) {
-        const newReport: ReportListItem = {
-          id: data.reportId,
-          keyword: keyword,
-          created_at: new Date().toISOString(),
-        };
-        setReports((prev) => [newReport, ...prev]);
+        // 리포트 목록 즉시 새로고침하여 최신 리포트 반영
+        await fetchReports();
         router.push(`/analyze/${data.reportId}`);
       } else {
         alert(data.error || '분석에 실패했습니다.');
