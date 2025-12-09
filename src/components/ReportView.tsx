@@ -359,50 +359,50 @@ export default function ReportView({ report }: ReportViewProps) {
             </div>
 
             {/* 데스크톱: 테이블 형식 */}
-            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0">
+            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
               <div className="inline-block min-w-full align-middle">
-                <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
                         경쟁사
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[200px]">
                         서비스 범위
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[150px]">
                         가격대
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[150px]">
                         핵심 USP
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[250px]">
                         강점/약점
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {analysis.competitors.map((competitor, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
                           {competitor.name}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 break-words max-w-[200px]">
                           {competitor.serviceScope || '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 break-words max-w-[150px]">
                           {competitor.priceRange || '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 break-words max-w-[150px]">
                           {competitor.coreUSP || '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="space-y-1">
-                            <div>
+                        <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm">
+                          <div className="space-y-1.5 min-w-[250px]">
+                            <div className="break-words">
                               <span className="text-green-600 font-medium">강:</span>{' '}
                               <span className="text-gray-600">{competitor.strength}</span>
                             </div>
-                            <div>
+                            <div className="break-words">
                               <span className="text-red-600 font-medium">약:</span>{' '}
                               <span className="text-gray-600">{competitor.weakness}</span>
                             </div>
