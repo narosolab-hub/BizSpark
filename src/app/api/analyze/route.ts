@@ -45,44 +45,61 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[ANALYZE] Starting analysis for:', keyword);
+    const startTime = Date.now();
 
-    // 1. 데이터 수집 (병렬 처리, 개별 에러 핸들링)
+    // 1. 데이터 수집 (모든 API를 병렬 처리, 타임아웃 설정)
     let naverTrends = null;
     let googleTrends = null;
+    let newsData: any[] = [];
 
     try {
-      const results = await Promise.allSettled([
-        getNaverTrends(keyword).catch((err) => {
-          console.error('[ANALYZE] Naver trends failed:', err);
+      // 모든 데이터 수집을 병렬로 처리 (최대 10초 타임아웃)
+      const dataCollectionPromise = Promise.allSettled([
+        Promise.race([
+          getNaverTrends(keyword),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+        ]).catch((err) => {
+          if (err.message !== 'Timeout') {
+            console.error('[ANALYZE] Naver trends failed:', err);
+          }
           return null;
         }),
-        getGoogleTrends(keyword).catch((err) => {
-          console.error('[ANALYZE] Google trends failed:', err);
+        Promise.race([
+          getGoogleTrends(keyword),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+        ]).catch((err) => {
+          if (err.message !== 'Timeout') {
+            console.error('[ANALYZE] Google trends failed:', err);
+          }
           return null;
+        }),
+        Promise.race([
+          getRecentNews(keyword),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+        ]).catch((err) => {
+          if (err.message !== 'Timeout') {
+            console.error('[ANALYZE] News collection failed:', err);
+          }
+          return [];
         }),
       ]);
 
-      naverTrends = results[0].status === 'fulfilled' ? results[0].value : null;
-      googleTrends = results[1].status === 'fulfilled' ? results[1].value : null;
+      const results = await dataCollectionPromise;
+      naverTrends = results[0].status === 'fulfilled' && results[0].value ? results[0].value : null;
+      googleTrends = results[1].status === 'fulfilled' && results[1].value ? results[1].value : null;
+      newsData = results[2].status === 'fulfilled' && Array.isArray(results[2].value) ? results[2].value : [];
     } catch (error) {
       console.error('[ANALYZE] Data collection error:', error);
       // 데이터 수집 실패해도 계속 진행
     }
 
+    const dataCollectionTime = Date.now() - startTime;
     console.log('[ANALYZE] Data collection completed:', {
       hasNaverTrends: !!naverTrends,
       hasGoogleTrends: !!googleTrends,
+      newsCount: newsData.length,
+      time: `${dataCollectionTime}ms`,
     });
-
-    // 2. 뉴스 수집 (NewsAPI만 사용)
-    let newsData: any[] = [];
-    try {
-      newsData = await getRecentNews(keyword);
-      console.log('[ANALYZE] News collection completed, count:', newsData.length);
-    } catch (error) {
-      console.error('[ANALYZE] News collection failed:', error);
-      newsData = []; // 뉴스 수집 실패 시 빈 배열
-    }
 
     // 3. AI 분석
     console.log('[ANALYZE] Starting AI analysis...');
@@ -91,8 +108,8 @@ export async function POST(request: NextRequest) {
       analysis = await analyzeBusinessIdea(
         keyword,
         {
-          naver: naverTrends || undefined,
-          google: googleTrends || undefined,
+          naver: naverTrends as any || undefined,
+          google: googleTrends as any || undefined,
         },
         newsData
       );

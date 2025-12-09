@@ -20,12 +20,23 @@ function createAnalysisPrompt(
   trendData: TrendData,
   newsData: NewsItem[]
 ): string {
+  // 뉴스 데이터를 최대 5개로 제한하여 프롬프트 크기 축소
+  const limitedNews = newsData.slice(0, 5);
+  
+  // 트렌드 데이터 요약 (전체 데이터 대신 핵심만)
+  const trendSummary = {
+    hasNaver: !!trendData.naver,
+    hasGoogle: !!trendData.google,
+    naverDataPoints: trendData.naver?.results?.[0]?.data?.length || 0,
+    googleDataPoints: trendData.google?.default?.timelineData?.length || 0,
+  };
+
   return `당신은 10년 경력의 시장 분석 전문가이자 스타트업 전략 컨설턴트입니다.
 
 [입력 데이터]
 키워드: ${keyword}
-트렌드 데이터: ${JSON.stringify(trendData, null, 2)}
-뉴스 데이터: ${JSON.stringify(newsData, null, 2)}
+트렌드 데이터 요약: ${JSON.stringify(trendSummary)}
+뉴스 데이터 (최신 5개): ${JSON.stringify(limitedNews, null, 2)}
 
 [미션]
 위 데이터를 기반으로 아래 항목을 JSON 형식으로 작성하세요.
@@ -233,10 +244,17 @@ export async function analyzeBusinessIdea(
 
     console.log('[GEMINI] Starting analysis for:', keyword);
     console.log('[GEMINI] Using model: gemini-2.5-flash (latest model)');
+    const geminiStartTime = Date.now();
 
     let result;
     try {
-      result = await model.generateContent(prompt);
+      // Gemini API 호출에 타임아웃 설정 (최대 20초)
+      result = await Promise.race([
+        model.generateContent(prompt),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Gemini API timeout')), 20000)
+        ),
+      ]) as any;
     } catch (modelError: any) {
       // 404 에러인 경우 다른 최신 모델 시도
       if (modelError?.message?.includes('404') || modelError?.message?.includes('not found')) {
@@ -262,8 +280,10 @@ export async function analyzeBusinessIdea(
     }
 
     const text = result.response.text();
+    const geminiTime = Date.now() - geminiStartTime;
 
     console.log('[GEMINI] Response received, parsing JSON...');
+    console.log('[GEMINI] Gemini API time:', `${geminiTime}ms`);
 
     const analysis = extractJSON<AnalysisResult>(text);
 
