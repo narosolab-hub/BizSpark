@@ -11,6 +11,7 @@ export interface MarketOverview {
 
 // 타겟 고객
 export interface TargetCustomers {
+  coreGroup?: string; // 핵심 그룹 (예: 2030 여성 1인 가구) (하위 호환성)
   segments: string[];
   painPoints: string[];
 }
@@ -18,6 +19,9 @@ export interface TargetCustomers {
 // 경쟁사
 export interface Competitor {
   name: string;
+  serviceScope?: string; // 서비스 범위 (하위 호환성)
+  priceRange?: string; // 가격대 (하위 호환성)
+  coreUSP?: string; // 핵심 USP (하위 호환성)
   strength: string;
   weakness: string;
 }
@@ -25,15 +29,23 @@ export interface Competitor {
 // 사업 아이디어
 export interface BusinessIdea {
   title: string;
+  type: 'SaaS/디지털' | 'HaaS/제품' | '서비스/콘텐츠'; // 아이템 유형
   description: string;
   usp: string;
   targetCustomer: string;
+  physicalTouchpoint?: string; // 물리적 접점 또는 오프라인 연계성
 }
 
 // 비즈니스 모델
+export interface BusinessModelOption {
+  type: string; // 모델 유형 (예: SaaS 구독, 거래 수수료, 제품 판매 등)
+  pricing: string; // 구체적인 가격 정책
+  rationale: string; // 선택 근거 (왜 이 모델이 적합한지)
+}
+
+// 비즈니스 모델 (다중 제안)
 export interface BusinessModel {
-  type: string;
-  pricing: string;
+  options: BusinessModelOption[]; // 최소 2가지 이상
 }
 
 // 로드맵
@@ -48,10 +60,19 @@ export interface Roadmap {
 export interface Risk {
   risk: string;
   solution: string;
+  actionPlan?: string; // 구체적인 실행 계획 (지표, 기간 포함) (하위 호환성)
+}
+
+// AI 코파일럿 프롬프트
+export interface AICopilotPrompt {
+  category: '시장 진입' | '제품 구체화' | '리스크 완화';
+  title: string;
+  prompt: string;
 }
 
 // 분석 결과 전체
 export interface AnalysisResult {
+  keyInsights?: string[]; // 핵심 인사이트 3줄 요약 (하위 호환성)
   marketOverview: MarketOverview;
   targetCustomers: TargetCustomers;
   competitors: Competitor[];
@@ -60,6 +81,7 @@ export interface AnalysisResult {
   businessModel: BusinessModel;
   roadmap: Roadmap;
   risks: Risk[];
+  aiCopilotPrompts?: AICopilotPrompt[]; // AI 코파일럿 프롬프트 (하위 호환성)
 }
 
 // 트렌드 데이터

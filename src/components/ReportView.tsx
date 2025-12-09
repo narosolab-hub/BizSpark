@@ -18,6 +18,9 @@ import {
   AlertTriangle,
   ArrowLeft,
   Menu,
+  Sparkles,
+  Copy,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,6 +61,56 @@ function Section({ title, icon, children, defaultOpen = false }: SectionProps) {
           <div className="pt-4 sm:pt-5">{children}</div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface PromptCardProps {
+  prompt: {
+    title: string;
+    prompt: string;
+  };
+}
+
+function PromptCard({ prompt }: PromptCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt.prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert('복사에 실패했습니다.');
+    }
+  };
+
+  return (
+    <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-blue-50 border border-blue-200">
+      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+        <h5 className="font-medium text-sm sm:text-base text-gray-900 flex-1">{prompt.title}</h5>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs sm:text-sm transition-colors flex-shrink-0"
+        >
+          {copied ? (
+            <>
+              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+              복사됨
+            </>
+          ) : (
+            <>
+              <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+              복사
+            </>
+          )}
+        </button>
+      </div>
+      <div className="bg-white rounded-lg p-2 sm:p-3 border border-blue-100">
+        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
+          {prompt.prompt}
+        </p>
+      </div>
     </div>
   );
 }
@@ -176,6 +229,30 @@ export default function ReportView({ report }: ReportViewProps) {
 
         {/* 섹션들 - 모바일 최적화 */}
         <div className="space-y-3 sm:space-y-4">
+          {/* 핵심 인사이트 3줄 요약 */}
+          {analysis.keyInsights && analysis.keyInsights.length > 0 && (
+            <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl sm:rounded-2xl border-2 border-violet-200 p-4 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center text-violet-600 flex-shrink-0">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">핵심 인사이트</h2>
+              </div>
+              <div className="space-y-2 sm:space-y-3">
+                {analysis.keyInsights.map((insight, idx) => (
+                  <div key={idx} className="flex items-start gap-2 sm:gap-3">
+                    <span className="text-violet-600 font-bold text-sm sm:text-base mt-0.5 flex-shrink-0">
+                      {idx + 1}.
+                    </span>
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed font-medium">
+                      {insight}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 시장 개요 */}
           <Section
             title="시장 개요"
@@ -201,6 +278,13 @@ export default function ReportView({ report }: ReportViewProps) {
           {/* 타겟 고객 */}
           <Section title="타겟 고객" icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />}>
             <div className="space-y-4 sm:space-y-6">
+              {/* 핵심 그룹 강조 */}
+              {analysis.targetCustomers.coreGroup && (
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-violet-50 border-2 border-violet-200">
+                  <h4 className="text-xs sm:text-sm font-medium text-violet-700 mb-1.5 sm:mb-2">핵심 타겟 그룹</h4>
+                  <p className="text-base sm:text-lg font-bold text-violet-900">{analysis.targetCustomers.coreGroup}</p>
+                </div>
+              )}
               <div>
                 <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">고객 세그먼트</h4>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -228,29 +312,62 @@ export default function ReportView({ report }: ReportViewProps) {
             </div>
           </Section>
 
-          {/* 경쟁 환경 */}
+          {/* 경쟁 환경 - 비교표 형식 */}
           <Section title="경쟁 환경" icon={<Target className="w-4 h-4 sm:w-5 sm:h-5" />}>
-            <div className="space-y-3 sm:space-y-4">
-              {analysis.competitors.map((competitor, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gray-50 border border-gray-100"
-                >
-                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3">
-                    {competitor.name}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                    <div>
-                      <span className="text-green-600 font-medium">강점:</span>
-                      <p className="text-gray-600 mt-1 leading-relaxed">{competitor.strength}</p>
-                    </div>
-                    <div>
-                      <span className="text-red-600 font-medium">약점:</span>
-                      <p className="text-gray-600 mt-1 leading-relaxed">{competitor.weakness}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        경쟁사
+                      </th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        서비스 범위
+                      </th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        가격대
+                      </th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        핵심 USP
+                      </th>
+                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                        강점/약점
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {analysis.competitors.map((competitor, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900">
+                          {competitor.name}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                          {competitor.serviceScope || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                          {competitor.priceRange || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                          {competitor.coreUSP || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
+                          <div className="space-y-1">
+                            <div>
+                              <span className="text-green-600 font-medium">강:</span>{' '}
+                              <span className="text-gray-600">{competitor.strength}</span>
+                            </div>
+                            <div>
+                              <span className="text-red-600 font-medium">약:</span>{' '}
+                              <span className="text-gray-600">{competitor.weakness}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Section>
 
@@ -288,6 +405,14 @@ export default function ReportView({ report }: ReportViewProps) {
                     </div>
                   </div>
                   <div className="ml-8 sm:ml-11 space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                    {idea.type && (
+                      <div>
+                        <span className="font-medium text-violet-600">유형:</span>
+                        <span className="ml-2 px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">
+                          {idea.type}
+                        </span>
+                      </div>
+                    )}
                     <div>
                       <span className="font-medium text-violet-600">USP:</span>
                       <span className="text-gray-600 ml-2">{idea.usp}</span>
@@ -296,6 +421,12 @@ export default function ReportView({ report }: ReportViewProps) {
                       <span className="font-medium text-violet-600">타겟:</span>
                       <span className="text-gray-600 ml-2">{idea.targetCustomer}</span>
                     </div>
+                    {idea.physicalTouchpoint && (
+                      <div>
+                        <span className="font-medium text-violet-600">물리적 접점:</span>
+                        <span className="text-gray-600 ml-2">{idea.physicalTouchpoint}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -328,17 +459,49 @@ export default function ReportView({ report }: ReportViewProps) {
             </ul>
           </Section>
 
-          {/* 비즈니스 모델 */}
+          {/* 비즈니스 모델 - 다중 제안 */}
           <Section title="비즈니스 모델" icon={<DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />}>
-            <div className="space-y-3 sm:space-y-4">
-              <div>
-                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">모델 유형</h4>
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.businessModel.type}</p>
-              </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">가격 정책</h4>
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysis.businessModel.pricing}</p>
-              </div>
+            <div className="space-y-4 sm:space-y-5">
+              {analysis.businessModel.options && analysis.businessModel.options.length > 0 ? (
+                analysis.businessModel.options.map((option, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 sm:p-5 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200"
+                  >
+                    <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                      <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-1">
+                          {option.type}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{option.pricing}</p>
+                      </div>
+                    </div>
+                    <div className="ml-8 sm:ml-11 mt-2 sm:mt-3">
+                      <h5 className="text-xs sm:text-sm font-medium text-green-700 mb-1">선택 근거</h5>
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{option.rationale}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // 하위 호환성: 기존 형식 지원
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">모델 유형</h4>
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                      {(analysis.businessModel as any).type || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">가격 정책</h4>
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                      {(analysis.businessModel as any).pricing || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </Section>
 
@@ -375,20 +538,53 @@ export default function ReportView({ report }: ReportViewProps) {
                 >
                   <div className="flex items-start gap-2 sm:gap-3">
                     <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 space-y-2">
                       <h4 className="font-medium text-sm sm:text-base text-gray-900">{item.risk}</h4>
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
-                        <span className="font-medium text-green-600">대응:</span>{' '}
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                        <span className="font-medium text-green-600">대응 방안:</span>{' '}
                         {item.solution}
                       </p>
+                      {item.actionPlan && (
+                        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed bg-white/50 p-2 rounded border border-amber-200">
+                          <span className="font-medium text-blue-600">실행 계획:</span>{' '}
+                          {item.actionPlan}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </Section>
+
+          {/* AI 코파일럿 프롬프트 */}
+          {analysis.aiCopilotPrompts && analysis.aiCopilotPrompts.length > 0 && (
+            <Section
+              title="다음 단계: AI 기반 실행 프롬프트"
+              icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />}
+              defaultOpen={true}
+            >
+              <div className="space-y-4 sm:space-y-5">
+                {['시장 진입', '제품 구체화', '리스크 완화'].map((category) => {
+                  const prompts = analysis.aiCopilotPrompts.filter((p) => p.category === category);
+                  if (prompts.length === 0) return null;
+                  return (
+                    <div key={category} className="space-y-3 sm:space-y-4">
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                        {category}
+                      </h4>
+                      {prompts.map((promptItem, idx) => (
+                        <PromptCard key={idx} prompt={promptItem} />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

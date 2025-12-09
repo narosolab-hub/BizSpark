@@ -38,29 +38,53 @@ function createAnalysisPrompt(
 5. 경쟁사는 반드시 실제 존재하는 회사/서비스/앱 이름을 사용하세요 (예: 당근마켓, 배달의민족, 토스 등). OO, XX, △△ 같은 가명을 절대 사용하지 마세요.
 6. 반드시 유효한 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
 
+[핵심 요구사항]
+- 핵심 인사이트: 시장/타겟/아이템의 핵심을 3개의 간결한 문장으로 요약
+- 타겟 고객: 핵심 그룹을 20자 이내로 명확히 정의 (예: "2030 여성 1인 가구")
+- 경쟁사: 비교표 형식으로 서비스 범위, 가격대, 핵심 USP, 강점/약점 포함
+- 사업 아이디어: 3가지 아이템에 SaaS/디지털, HaaS/제품, 서비스/콘텐츠 유형을 각각 1개 이상 포함 필수
+- 비즈니스 모델: SaaS 구독 모델 외의 다른 유형을 포함하여 최소 2가지 이상 제안, 각 모델의 선택 근거 명시
+- 리스크: 대응 방안을 구체적인 실행 계획으로 작성 (지표, 기간 포함)
+- AI 프롬프트: 시장 진입, 제품 구체화, 리스크 완화 카테고리별로 각 1~2가지씩 제공
+
 {
+  "keyInsights": [
+    "시장 인사이트 1줄 요약",
+    "타겟 고객 인사이트 1줄 요약",
+    "사업 아이템 인사이트 1줄 요약"
+  ],
   "marketOverview": {
     "definition": "키워드에 대한 명확한 정의와 시장 설명",
     "marketSize": "국내/글로벌 시장 규모 추정 (숫자와 근거 포함)",
     "trend": "현재 시장 트렌드와 성장 방향"
   },
   "targetCustomers": {
+    "coreGroup": "핵심 그룹 (20자 이내, 예: 2030 여성 1인 가구)",
     "segments": ["타겟 고객 세그먼트 1", "타겟 고객 세그먼트 2", "타겟 고객 세그먼트 3"],
     "painPoints": ["고객 페인포인트 1", "고객 페인포인트 2", "고객 페인포인트 3", "고객 페인포인트 4", "고객 페인포인트 5"]
   },
   "competitors": [
     {
       "name": "경쟁사/서비스명 1",
+      "serviceScope": "서비스 범위 (예: 전국 배송, 온라인 전용 등)",
+      "priceRange": "가격대 (예: 월 9,900원, 거래당 3% 수수료 등)",
+      "coreUSP": "핵심 USP (예: 30분 배송, 무료 배송 등)",
       "strength": "해당 경쟁사의 강점",
       "weakness": "해당 경쟁사의 약점"
     },
     {
       "name": "경쟁사/서비스명 2",
+      "serviceScope": "서비스 범위",
+      "priceRange": "가격대",
+      "coreUSP": "핵심 USP",
       "strength": "해당 경쟁사의 강점",
       "weakness": "해당 경쟁사의 약점"
     },
     {
       "name": "경쟁사/서비스명 3",
+      "serviceScope": "서비스 범위",
+      "priceRange": "가격대",
+      "coreUSP": "핵심 USP",
       "strength": "해당 경쟁사의 강점",
       "weakness": "해당 경쟁사의 약점"
     }
@@ -68,21 +92,27 @@ function createAnalysisPrompt(
   "businessIdeas": [
     {
       "title": "사업 아이디어 제목 1",
+      "type": "SaaS/디지털",
       "description": "아이디어에 대한 상세 설명",
       "usp": "핵심 차별화 포인트 (Unique Selling Point)",
-      "targetCustomer": "이 아이디어의 주요 타겟 고객"
+      "targetCustomer": "이 아이디어의 주요 타겟 고객",
+      "physicalTouchpoint": "물리적 접점 또는 오프라인 연계성 (해당 없는 경우 생략 가능)"
     },
     {
       "title": "사업 아이디어 제목 2",
+      "type": "HaaS/제품",
       "description": "아이디어에 대한 상세 설명",
       "usp": "핵심 차별화 포인트",
-      "targetCustomer": "이 아이디어의 주요 타겟 고객"
+      "targetCustomer": "이 아이디어의 주요 타겟 고객",
+      "physicalTouchpoint": "물리적 접점 또는 오프라인 연계성"
     },
     {
       "title": "사업 아이디어 제목 3",
+      "type": "서비스/콘텐츠",
       "description": "아이디어에 대한 상세 설명",
       "usp": "핵심 차별화 포인트",
-      "targetCustomer": "이 아이디어의 주요 타겟 고객"
+      "targetCustomer": "이 아이디어의 주요 타겟 고객",
+      "physicalTouchpoint": "물리적 접점 또는 오프라인 연계성"
     }
   ],
   "mvpFeatures": [
@@ -93,8 +123,18 @@ function createAnalysisPrompt(
     "MVP 필수 기능 5"
   ],
   "businessModel": {
-    "type": "추천 비즈니스 모델 유형 (예: SaaS, 마켓플레이스, 구독 등)",
-    "pricing": "구체적인 가격 정책 제안"
+    "options": [
+      {
+        "type": "비즈니스 모델 유형 1 (예: SaaS 구독, 거래 수수료, 제품 판매, 전문 컨설팅 등)",
+        "pricing": "구체적인 가격 정책 제안",
+        "rationale": "이 모델이 시장 분석 결과에 왜 가장 적합한지 설명"
+      },
+      {
+        "type": "비즈니스 모델 유형 2 (SaaS 구독 모델이 아닌 다른 유형 필수)",
+        "pricing": "구체적인 가격 정책 제안",
+        "rationale": "이 모델이 시장 분석 결과에 왜 적합한지 설명"
+      }
+    ]
   },
   "roadmap": {
     "week1": [
@@ -121,15 +161,50 @@ function createAnalysisPrompt(
   "risks": [
     {
       "risk": "예상 리스크 1",
-      "solution": "대응 방안 1"
+      "solution": "대응 방안 1",
+      "actionPlan": "구체적인 실행 계획 (지표, 기간 포함, 예: AES-256 암호화 적용 및 월 1회 보안 감사 계획 수립)"
     },
     {
       "risk": "예상 리스크 2",
-      "solution": "대응 방안 2"
+      "solution": "대응 방안 2",
+      "actionPlan": "구체적인 실행 계획 (지표, 기간 포함)"
     },
     {
       "risk": "예상 리스크 3",
-      "solution": "대응 방안 3"
+      "solution": "대응 방안 3",
+      "actionPlan": "구체적인 실행 계획 (지표, 기간 포함)"
+    }
+  ],
+  "aiCopilotPrompts": [
+    {
+      "category": "시장 진입",
+      "title": "프롬프트 제목 1",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿 (사용자가 복사해서 사용할 수 있는 형태)"
+    },
+    {
+      "category": "시장 진입",
+      "title": "프롬프트 제목 2",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿"
+    },
+    {
+      "category": "제품 구체화",
+      "title": "프롬프트 제목 3",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿"
+    },
+    {
+      "category": "제품 구체화",
+      "title": "프롬프트 제목 4",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿"
+    },
+    {
+      "category": "리스크 완화",
+      "title": "프롬프트 제목 5",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿"
+    },
+    {
+      "category": "리스크 완화",
+      "title": "프롬프트 제목 6",
+      "prompt": "구체적인 AI 코파일럿 프롬프트 템플릿"
     }
   ]
 }`;
