@@ -120,6 +120,21 @@ export async function POST(request: NextRequest) {
       console.log('[ANALYZE] AI analysis completed successfully');
     } catch (error) {
       console.error('[ANALYZE] AI analysis failed:', error);
+      
+      // API 키 만료 에러인 경우 명확한 메시지와 함께 400 에러 반환 (500 대신)
+      if (error instanceof Error && 
+          (error.message.includes('API key expired') || 
+           error.message.includes('API_KEY_INVALID') ||
+           error.message.includes('API 키가 만료되었거나'))) {
+        return NextResponse.json(
+          { 
+            error: 'Gemini API 키가 만료되었거나 유효하지 않습니다. 관리자에게 문의해주세요.',
+            code: 'API_KEY_INVALID'
+          },
+          { status: 400 }
+        );
+      }
+      
       throw error;
     }
 
