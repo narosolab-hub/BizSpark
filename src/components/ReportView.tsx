@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Report } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import {
@@ -21,11 +21,8 @@ import {
   Sparkles,
   Copy,
   Check,
-  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface ReportViewProps {
   report: Report;
@@ -121,8 +118,6 @@ function PromptCard({ prompt }: PromptCardProps) {
 export default function ReportView({ report }: ReportViewProps) {
   const { keyword, analysis_result: analysis, created_at } = report;
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const reportContentRef = useRef<HTMLDivElement>(null);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleShare = async () => {
     try {
@@ -143,104 +138,8 @@ export default function ReportView({ report }: ReportViewProps) {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!reportContentRef.current) {
-      alert('리포트 내용을 찾을 수 없습니다.');
-      return;
-    }
-
-    setIsGeneratingPDF(true);
-    try {
-      // 리포트 내용을 캔버스로 변환 (전체 콘텐츠 캡처)
-      const canvas = await html2canvas(reportContentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: reportContentRef.current.scrollWidth,
-        windowHeight: reportContentRef.current.scrollHeight,
-        allowTaint: false,
-        removeContainer: false,
-      });
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const contentWidth = pdfWidth - margin * 2;
-      const contentHeight = pdfHeight - margin * 2;
-      
-      // 이미지 크기 계산 (PDF 크기에 맞춤)
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const imgAspectRatio = imgWidth / imgHeight;
-      const contentAspectRatio = contentWidth / contentHeight;
-      
-      // PDF에 맞게 이미지 크기 조정
-      let finalImgWidth, finalImgHeight;
-      if (imgAspectRatio > contentAspectRatio) {
-        // 이미지가 더 넓은 경우 - 너비에 맞춤
-        finalImgWidth = contentWidth;
-        finalImgHeight = contentWidth / imgAspectRatio;
-      } else {
-        // 이미지가 더 높은 경우 - 높이에 맞춤
-        finalImgHeight = contentHeight;
-        finalImgWidth = contentHeight * imgAspectRatio;
-      }
-      
-      // 여러 페이지로 나누기
-      const totalPages = Math.ceil(finalImgHeight / contentHeight);
-      
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        // 각 페이지에 해당하는 이미지 부분 계산
-        const sourceY = (imgHeight / totalPages) * i;
-        const sourceHeight = Math.min(imgHeight / totalPages, imgHeight - sourceY);
-        
-        // 임시 캔버스에 해당 부분만 그리기
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = imgWidth;
-        tempCanvas.height = sourceHeight;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        if (tempCtx) {
-          // 원본 캔버스에서 해당 부분만 복사
-          tempCtx.drawImage(
-            canvas,
-            0, sourceY, imgWidth, sourceHeight,
-            0, 0, imgWidth, sourceHeight
-          );
-          
-          const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
-          const pageImgHeight = Math.min(finalImgHeight / totalPages, contentHeight);
-          const pageImgWidth = finalImgWidth;
-          
-          // PDF 페이지에 이미지 추가
-          pdf.addImage(
-            pageImgData,
-            'PNG',
-            margin,
-            margin,
-            pageImgWidth,
-            pageImgHeight,
-            undefined,
-            'FAST'
-          );
-        }
-      }
-
-      // 파일 다운로드
-      const fileName = `BizSpark_${report.keyword}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
-    } catch (error) {
-      console.error('PDF 생성 실패:', error);
-      alert('PDF 생성에 실패했습니다. 다시 시도해주세요.');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
+  const handleDownloadPDF = () => {
+    alert('PDF 다운로드 기능은 준비 중입니다.');
   };
 
   return (
@@ -268,20 +167,10 @@ export default function ReportView({ report }: ReportViewProps) {
               </button>
               <button
                 onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 transition-colors"
               >
-                {isGeneratingPDF ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    생성 중...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    PDF 다운로드
-                  </>
-                )}
+                <Download className="w-4 h-4" />
+                PDF 다운로드 (준비 중)
               </button>
             </div>
             
@@ -312,20 +201,10 @@ export default function ReportView({ report }: ReportViewProps) {
                   handleDownloadPDF();
                   setShowMobileMenu(false);
                 }}
-                disabled={isGeneratingPDF}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 text-sm transition-colors"
               >
-                {isGeneratingPDF ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    생성 중...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    PDF 다운로드
-                  </>
-                )}
+                <Download className="w-4 h-4" />
+                PDF 다운로드 (준비 중)
               </button>
             </div>
           )}
@@ -333,7 +212,7 @@ export default function ReportView({ report }: ReportViewProps) {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8" ref={reportContentRef}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* 리포트 헤더 - 모바일 최적화 */}
         <div className="text-center mb-6 sm:mb-10">
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs sm:text-sm mb-3 sm:mb-4">
