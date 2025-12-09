@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface ReportViewProps {
   report: Report;
@@ -151,38 +150,455 @@ export default function ReportView({ report }: ReportViewProps) {
 
     setIsGeneratingPDF(true);
     try {
-      // 리포트 내용을 캔버스로 변환
-      const canvas = await html2canvas(reportContentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: reportContentRef.current.scrollWidth,
-        windowHeight: reportContentRef.current.scrollHeight,
-      });
-
-      // PDF 생성
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgScaledWidth = imgWidth * ratio;
-      const imgScaledHeight = imgHeight * ratio;
+      const margin = 15;
+      const contentWidth = pdfWidth - margin * 2;
+      let yPosition = margin;
+
+      // 헤더 추가
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`"${report.keyword}" 시장 분석 리포트`, margin, yPosition);
+      yPosition += 10;
+
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      const dateStr = report.created_at 
+        ? new Date(report.created_at).toLocaleDateString('ko-KR')
+        : new Date().toLocaleDateString('ko-KR');
+      pdf.text(`생성일: ${dateStr}`, margin, yPosition);
+      yPosition += 15;
+
+      // 분석 결과를 텍스트로 변환하여 PDF에 추가
+      const analysis = report.analysis_result;
       
-      // 여러 페이지로 나누기
-      const totalPages = Math.ceil(imgScaledHeight / pdfHeight);
-      
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
+      // 핵심 인사이트
+      if (analysis.keyInsights && analysis.keyInsights.length > 0) {
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('핵심 인사이트', margin, yPosition);
+        yPosition += 8;
         
-        const yPosition = -(i * pdfHeight);
-        pdf.addImage(imgData, 'PNG', 0, yPosition, imgScaledWidth, imgScaledHeight);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.keyInsights.forEach((insight: string) => {
+          const lines = pdf.splitTextToSize(`• ${insight}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+
+      // 시장 개요
+      if (analysis.marketOverview) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('시장 개요', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        const mo = analysis.marketOverview;
+        if (mo.definition) {
+          const lines = pdf.splitTextToSize(`정의: ${mo.definition}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 3;
+        }
+        if (mo.marketSize) {
+          const lines = pdf.splitTextToSize(`시장 규모: ${mo.marketSize}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 3;
+        }
+        if (mo.trend) {
+          const lines = pdf.splitTextToSize(`트렌드: ${mo.trend}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 3;
+        }
+        yPosition += 5;
+      }
+
+      // 타겟 고객
+      if (analysis.targetCustomers) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('타겟 고객', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        const tc = analysis.targetCustomers;
+        if (tc.coreGroup) {
+          pdf.setFont('helvetica', 'bold');
+          const lines = pdf.splitTextToSize(`핵심 그룹: ${tc.coreGroup}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 3;
+          pdf.setFont('helvetica', 'normal');
+        }
+        if (tc.segments && tc.segments.length > 0) {
+          const lines = pdf.splitTextToSize(`세그먼트: ${tc.segments.join(', ')}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 3;
+        }
+        yPosition += 5;
+      }
+
+      // 사업 아이디어
+      if (analysis.businessIdeas && analysis.businessIdeas.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('사업 아이디어', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.businessIdeas.forEach((idea: any, idx: number) => {
+          if (yPosition + 30 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.setFont('helvetica', 'bold');
+          const titleLines = pdf.splitTextToSize(`${idx + 1}. ${idea.title || '아이디어'} (${idea.type || '유형'})`, contentWidth);
+          pdf.text(titleLines, margin, yPosition);
+          yPosition += titleLines.length * 6 + 2;
+          
+          pdf.setFont('helvetica', 'normal');
+          if (idea.description) {
+            const descLines = pdf.splitTextToSize(`설명: ${idea.description}`, contentWidth);
+            if (yPosition + descLines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(descLines, margin, yPosition);
+            yPosition += descLines.length * 6 + 2;
+          }
+          if (idea.usp) {
+            const uspLines = pdf.splitTextToSize(`USP: ${idea.usp}`, contentWidth);
+            if (yPosition + uspLines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(uspLines, margin, yPosition);
+            yPosition += uspLines.length * 6 + 2;
+          }
+          yPosition += 5;
+        });
+      }
+
+      // 경쟁사
+      if (analysis.competitors && analysis.competitors.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('경쟁 환경', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.competitors.forEach((competitor: any, idx: number) => {
+          if (yPosition + 40 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.setFont('helvetica', 'bold');
+          const nameLines = pdf.splitTextToSize(`${idx + 1}. ${competitor.name}`, contentWidth);
+          pdf.text(nameLines, margin, yPosition);
+          yPosition += nameLines.length * 6 + 2;
+          
+          pdf.setFont('helvetica', 'normal');
+          if (competitor.serviceScope) {
+            const lines = pdf.splitTextToSize(`서비스 범위: ${competitor.serviceScope}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (competitor.priceRange) {
+            const lines = pdf.splitTextToSize(`가격대: ${competitor.priceRange}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (competitor.coreUSP) {
+            const lines = pdf.splitTextToSize(`핵심 USP: ${competitor.coreUSP}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (competitor.strength) {
+            const lines = pdf.splitTextToSize(`강점: ${competitor.strength}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (competitor.weakness) {
+            const lines = pdf.splitTextToSize(`약점: ${competitor.weakness}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          yPosition += 5;
+        });
+      }
+
+      // MVP 기능
+      if (analysis.mvpFeatures && analysis.mvpFeatures.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('MVP 필수 기능', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.mvpFeatures.forEach((feature: string, idx: number) => {
+          const lines = pdf.splitTextToSize(`${idx + 1}. ${feature}`, contentWidth);
+          if (yPosition + lines.length * 6 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(lines, margin, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+
+      // 비즈니스 모델
+      if (analysis.businessModel && analysis.businessModel.options && analysis.businessModel.options.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('비즈니스 모델', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.businessModel.options.forEach((option: any, idx: number) => {
+          if (yPosition + 30 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.setFont('helvetica', 'bold');
+          const typeLines = pdf.splitTextToSize(`${idx + 1}. ${option.type || '모델 유형'}`, contentWidth);
+          pdf.text(typeLines, margin, yPosition);
+          yPosition += typeLines.length * 6 + 2;
+          
+          pdf.setFont('helvetica', 'normal');
+          if (option.pricing) {
+            const lines = pdf.splitTextToSize(`가격 정책: ${option.pricing}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (option.rationale) {
+            const lines = pdf.splitTextToSize(`선택 근거: ${option.rationale}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          yPosition += 5;
+        });
+      }
+
+      // 로드맵
+      if (analysis.roadmap) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('30일 실행 로드맵', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        const roadmap = analysis.roadmap;
+        Object.entries(roadmap).forEach(([week, tasks]: [string, string[]]) => {
+          if (yPosition + 20 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(week.toUpperCase(), margin, yPosition);
+          yPosition += 6;
+          
+          pdf.setFont('helvetica', 'normal');
+          tasks.forEach((task: string) => {
+            const lines = pdf.splitTextToSize(`• ${task}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          });
+          yPosition += 3;
+        });
+      }
+
+      // 리스크
+      if (analysis.risks && analysis.risks.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('예상 리스크 및 대응 방안', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        analysis.risks.forEach((risk: any, idx: number) => {
+          if (yPosition + 40 > pdfHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.setFont('helvetica', 'bold');
+          const riskLines = pdf.splitTextToSize(`${idx + 1}. 리스크: ${risk.risk}`, contentWidth);
+          pdf.text(riskLines, margin, yPosition);
+          yPosition += riskLines.length * 6 + 2;
+          
+          pdf.setFont('helvetica', 'normal');
+          if (risk.solution) {
+            const lines = pdf.splitTextToSize(`대응 방안: ${risk.solution}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          if (risk.actionPlan) {
+            const lines = pdf.splitTextToSize(`실행 계획: ${risk.actionPlan}`, contentWidth);
+            if (yPosition + lines.length * 6 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.text(lines, margin, yPosition);
+            yPosition += lines.length * 6 + 2;
+          }
+          yPosition += 5;
+        });
+      }
+
+      // AI 코파일럿 프롬프트
+      if (analysis.aiCopilotPrompts && analysis.aiCopilotPrompts.length > 0) {
+        if (yPosition + 20 > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('AI 코파일럿 프롬프트', margin, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        const categories = ['시장 진입', '제품 구체화', '리스크 완화'];
+        categories.forEach((category) => {
+          const prompts = analysis.aiCopilotPrompts?.filter((p: any) => p.category === category) || [];
+          if (prompts.length > 0) {
+            if (yPosition + 20 > pdfHeight - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`[${category}]`, margin, yPosition);
+            yPosition += 6;
+            
+            pdf.setFont('helvetica', 'normal');
+            prompts.forEach((prompt: any, idx: number) => {
+              if (yPosition + 30 > pdfHeight - margin) {
+                pdf.addPage();
+                yPosition = margin;
+              }
+              const titleLines = pdf.splitTextToSize(`${idx + 1}. ${prompt.title}`, contentWidth);
+              pdf.text(titleLines, margin, yPosition);
+              yPosition += titleLines.length * 6 + 2;
+              
+              if (prompt.prompt) {
+                const promptLines = pdf.splitTextToSize(prompt.prompt, contentWidth - 5);
+                if (yPosition + promptLines.length * 5 > pdfHeight - margin) {
+                  pdf.addPage();
+                  yPosition = margin;
+                }
+                pdf.setFont('helvetica', 'italic');
+                pdf.text(promptLines, margin + 5, yPosition);
+                yPosition += promptLines.length * 5 + 3;
+                pdf.setFont('helvetica', 'normal');
+              }
+            });
+            yPosition += 3;
+          }
+        });
       }
 
       // 파일 다운로드
