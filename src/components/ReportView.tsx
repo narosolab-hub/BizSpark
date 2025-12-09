@@ -294,7 +294,7 @@ export default function ReportView({ report }: ReportViewProps) {
             시장 분석 리포트
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 break-words px-2">
-            "{keyword}"
+            &quot;{keyword}&quot;
           </h1>
           <p className="text-xs sm:text-sm text-gray-500">
             {formatDate(created_at)} 생성

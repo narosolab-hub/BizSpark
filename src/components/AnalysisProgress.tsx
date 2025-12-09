@@ -50,7 +50,7 @@ export default function AnalysisProgress({ keyword }: AnalysisProgressProps) {
             분석 진행 중
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3 break-words px-2">
-            "{keyword}"
+            &quot;{keyword}&quot;
           </h1>
           <p className="text-sm sm:text-base text-gray-400 px-4">
             AI가 시장을 분석하고 사업 아이디어를 생성하고 있습니다

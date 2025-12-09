@@ -278,7 +278,7 @@ export default function DashboardPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-violet-300 transition-colors truncate">
-                                "{group.keyword}"
+                                &quot;{group.keyword}&quot;
                               </h3>
                               {hasMultipleVersions && (
                                 <span className="px-2 py-0.5 text-xs rounded-full bg-violet-500/20 text-violet-300 whitespace-nowrap">

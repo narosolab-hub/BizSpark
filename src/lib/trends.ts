@@ -1,7 +1,7 @@
 import { GoogleTrendData } from '@/types';
 
 // google-trends-api는 CommonJS 모듈이므로 require 사용
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line
 const googleTrends = require('google-trends-api');
 
 /**
