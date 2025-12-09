@@ -24,7 +24,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ReportViewProps {
   report: Report;
@@ -150,30 +151,90 @@ export default function ReportView({ report }: ReportViewProps) {
 
     setIsGeneratingPDF(true);
     try {
-      // html2pdf.js를 사용하여 한글 포함 PDF 생성 (이미지 기반이지만 한글 깨짐 없음)
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `BizSpark_${report.keyword}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          letterRendering: true, // 텍스트 렌더링 개선
-        },
-        jsPDF: { 
-          unit: 'mm' as const, 
-          format: 'a4' as const, 
-          orientation: 'portrait' as const,
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as any },
-      };
+      // 리포트 내용을 캔버스로 변환 (전체 콘텐츠 캡처)
+      const canvas = await html2canvas(reportContentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: reportContentRef.current.scrollWidth,
+        windowHeight: reportContentRef.current.scrollHeight,
+        allowTaint: false,
+        removeContainer: false,
+      });
 
-      await html2pdf()
-        .set(opt)
-        .from(reportContentRef.current)
-        .save();
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const contentWidth = pdfWidth - margin * 2;
+      const contentHeight = pdfHeight - margin * 2;
+      
+      // 이미지 크기 계산 (PDF 크기에 맞춤)
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const imgAspectRatio = imgWidth / imgHeight;
+      const contentAspectRatio = contentWidth / contentHeight;
+      
+      // PDF에 맞게 이미지 크기 조정
+      let finalImgWidth, finalImgHeight;
+      if (imgAspectRatio > contentAspectRatio) {
+        // 이미지가 더 넓은 경우 - 너비에 맞춤
+        finalImgWidth = contentWidth;
+        finalImgHeight = contentWidth / imgAspectRatio;
+      } else {
+        // 이미지가 더 높은 경우 - 높이에 맞춤
+        finalImgHeight = contentHeight;
+        finalImgWidth = contentHeight * imgAspectRatio;
+      }
+      
+      // 여러 페이지로 나누기
+      const totalPages = Math.ceil(finalImgHeight / contentHeight);
+      
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        // 각 페이지에 해당하는 이미지 부분 계산
+        const sourceY = (imgHeight / totalPages) * i;
+        const sourceHeight = Math.min(imgHeight / totalPages, imgHeight - sourceY);
+        
+        // 임시 캔버스에 해당 부분만 그리기
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = imgWidth;
+        tempCanvas.height = sourceHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        if (tempCtx) {
+          // 원본 캔버스에서 해당 부분만 복사
+          tempCtx.drawImage(
+            canvas,
+            0, sourceY, imgWidth, sourceHeight,
+            0, 0, imgWidth, sourceHeight
+          );
+          
+          const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
+          const pageImgHeight = Math.min(finalImgHeight / totalPages, contentHeight);
+          const pageImgWidth = finalImgWidth;
+          
+          // PDF 페이지에 이미지 추가
+          pdf.addImage(
+            pageImgData,
+            'PNG',
+            margin,
+            margin,
+            pageImgWidth,
+            pageImgHeight,
+            undefined,
+            'FAST'
+          );
+        }
+      }
+
+      // 파일 다운로드
+      const fileName = `BizSpark_${report.keyword}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
     } catch (error) {
       console.error('PDF 생성 실패:', error);
       alert('PDF 생성에 실패했습니다. 다시 시도해주세요.');
