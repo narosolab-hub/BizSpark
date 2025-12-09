@@ -312,26 +312,71 @@ export default function ReportView({ report }: ReportViewProps) {
             </div>
           </Section>
 
-          {/* 경쟁 환경 - 비교표 형식 */}
+          {/* 경쟁 환경 - 모바일 카드, 데스크톱 테이블 */}
           <Section title="경쟁 환경" icon={<Target className="w-4 h-4 sm:w-5 sm:h-5" />}>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            {/* 모바일: 카드 형식 */}
+            <div className="block sm:hidden space-y-3">
+              {analysis.competitors.map((competitor, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200"
+                >
+                  <h4 className="font-semibold text-base text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                    {competitor.name}
+                  </h4>
+                  <div className="space-y-2.5 text-sm">
+                    {competitor.serviceScope && (
+                      <div>
+                        <span className="font-medium text-gray-700">서비스 범위:</span>
+                        <p className="text-gray-600 mt-0.5 leading-relaxed">{competitor.serviceScope}</p>
+                      </div>
+                    )}
+                    {competitor.priceRange && (
+                      <div>
+                        <span className="font-medium text-gray-700">가격대:</span>
+                        <p className="text-gray-600 mt-0.5 leading-relaxed">{competitor.priceRange}</p>
+                      </div>
+                    )}
+                    {competitor.coreUSP && (
+                      <div>
+                        <span className="font-medium text-gray-700">핵심 USP:</span>
+                        <p className="text-gray-600 mt-0.5 leading-relaxed">{competitor.coreUSP}</p>
+                      </div>
+                    )}
+                    <div className="pt-2 space-y-1.5">
+                      <div>
+                        <span className="text-green-600 font-medium">강점:</span>
+                        <p className="text-gray-600 mt-0.5 leading-relaxed">{competitor.strength}</p>
+                      </div>
+                      <div>
+                        <span className="text-red-600 font-medium">약점:</span>
+                        <p className="text-gray-600 mt-0.5 leading-relaxed">{competitor.weakness}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 데스크톱: 테이블 형식 */}
+            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0">
               <div className="inline-block min-w-full align-middle">
                 <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                         경쟁사
                       </th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                         서비스 범위
                       </th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                         가격대
                       </th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                         핵심 USP
                       </th>
-                      <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                         강점/약점
                       </th>
                     </tr>
@@ -339,19 +384,19 @@ export default function ReportView({ report }: ReportViewProps) {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {analysis.competitors.map((competitor, idx) => (
                       <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
                           {competitor.name}
                         </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {competitor.serviceScope || '-'}
                         </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {competitor.priceRange || '-'}
                         </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {competitor.coreUSP || '-'}
                         </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
+                        <td className="px-4 py-3 text-sm">
                           <div className="space-y-1">
                             <div>
                               <span className="text-green-600 font-medium">강:</span>{' '}
