@@ -256,6 +256,14 @@ export async function analyzeBusinessIdea(
         ),
       ]) as any;
     } catch (modelError: any) {
+      // API 키 만료 또는 유효하지 않은 경우 명확한 에러 메시지
+      if (modelError?.message?.includes('API key expired') || 
+          modelError?.message?.includes('API_KEY_INVALID') ||
+          modelError?.status === 400) {
+        console.error('[GEMINI] API key expired or invalid:', modelError?.message);
+        throw new Error('Gemini API 키가 만료되었거나 유효하지 않습니다. Vercel 환경 변수에서 API 키를 확인해주세요.');
+      }
+      
       // 404 에러인 경우 다른 최신 모델 시도
       if (modelError?.message?.includes('404') || modelError?.message?.includes('not found')) {
         console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-2.5-pro...`);
@@ -264,6 +272,13 @@ export async function analyzeBusinessIdea(
           modelName = 'gemini-2.5-pro';
           result = await model.generateContent(prompt);
         } catch (secondError: any) {
+          // API 키 문제인 경우 즉시 throw
+          if (secondError?.message?.includes('API key expired') || 
+              secondError?.message?.includes('API_KEY_INVALID') ||
+              secondError?.status === 400) {
+            throw new Error('Gemini API 키가 만료되었거나 유효하지 않습니다. Vercel 환경 변수에서 API 키를 확인해주세요.');
+          }
+          
           // gemini-2.5-pro도 실패하면 gemini-1.5-flash로 fallback
           if (secondError?.message?.includes('404') || secondError?.message?.includes('not found')) {
             console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-1.5-flash...`);
