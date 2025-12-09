@@ -5,11 +5,12 @@ export async function GET() {
   try {
     const supabase = createClient();
     // 최신 리포트부터 가져오기 (created_at 기준 내림차순)
+    // 성능 최적화: 최근 50개만 가져오기 (필요시 증가 가능)
     const { data: reports, error } = await supabase
       .from('reports')
       .select('id, keyword, created_at')
       .order('created_at', { ascending: false, nullsFirst: false })
-      .limit(100);
+      .limit(50);
 
     if (error) {
       console.error('[REPORTS] Fetch error:', error);
@@ -38,7 +39,14 @@ export async function GET() {
       console.log('[REPORTS] No reports found');
     }
 
-    return NextResponse.json({ reports: reports || [] });
+    const response = NextResponse.json({ reports: reports || [] });
+    
+    // 캐시 방지 헤더 추가
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
+    return response;
   } catch (error) {
     console.error('[REPORTS] Error:', error);
     return NextResponse.json(

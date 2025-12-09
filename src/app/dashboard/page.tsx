@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { formatDateTime, cn } from '@/lib/utils';
 import {
   Sparkles,
@@ -30,6 +30,7 @@ interface GroupedReport {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [reports, setReports] = useState<ReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -43,9 +44,14 @@ export default function DashboardPage() {
   };
 
   const groupedReports = useMemo<GroupedReport[]>(() => {
+    if (!reports || reports.length === 0) return [];
+    
     const groups: { [key: string]: ReportListItem[] } = {};
     
-    reports.forEach((report) => {
+    // 최신 리포트부터 처리 (이미 정렬되어 있지만 확실히 하기 위해)
+    const sortedReports = [...reports].sort((a, b) => getTime(b.created_at) - getTime(a.created_at));
+    
+    sortedReports.forEach((report) => {
       if (!groups[report.keyword]) {
         groups[report.keyword] = [];
       }
@@ -72,21 +78,7 @@ export default function DashboardPage() {
     });
   };
 
-  useEffect(() => {
-    fetchReports();
-    
-    // 페이지가 포커스를 받을 때마다 리포트 목록 새로고침
-    const handleFocus = () => {
-      fetchReports();
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       // 타임스탬프를 쿼리 파라미터로 추가하여 캐시 무효화
       const response = await fetch(`/api/reports?t=${Date.now()}`, {
@@ -116,7 +108,42 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    
+    // 페이지가 포커스를 받을 때마다 리포트 목록 새로고침
+    const handleFocus = () => {
+      console.log('[DASHBOARD] Window focused, refreshing reports...');
+      fetchReports();
+    };
+    
+    // 페이지가 보일 때마다 새로고침 (다른 페이지에서 돌아올 때)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('[DASHBOARD] Page visible, refreshing reports...');
+        fetchReports();
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchReports]);
+
+  // 경로 변경 시 새로고침 (다른 페이지에서 돌아올 때)
+  useEffect(() => {
+    if (pathname === '/dashboard') {
+      console.log('[DASHBOARD] Route changed to dashboard, refreshing reports...');
+      fetchReports();
+    }
+  }, [pathname, fetchReports]);
+
 
   const handleDelete = async (id: string) => {
     if (!confirm('이 리포트를 삭제하시겠습니까?')) return;
