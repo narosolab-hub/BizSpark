@@ -4,10 +4,11 @@ import { createClient } from '@/lib/supabase';
 export async function GET() {
   try {
     const supabase = createClient();
-    // 전부 가져오고 프론트엔드에서 정렬
+    // 최신 리포트부터 가져오기 (created_at 기준 내림차순)
     const { data: reports, error } = await supabase
       .from('reports')
       .select('id, keyword, created_at')
+      .order('created_at', { ascending: false, nullsFirst: false })
       .limit(100);
 
     if (error) {
@@ -18,7 +19,25 @@ export async function GET() {
       );
     }
 
-    console.log('[REPORTS] Fetched count:', reports?.length || 0);
+    // 최신 리포트와 오래된 리포트의 날짜 확인
+    if (reports && reports.length > 0) {
+      const latest = reports[0];
+      const oldest = reports[reports.length - 1];
+      console.log('[REPORTS] Fetched count:', reports.length);
+      console.log('[REPORTS] Latest report:', {
+        keyword: latest.keyword,
+        created_at: latest.created_at,
+        date: latest.created_at ? new Date(latest.created_at).toLocaleString('ko-KR') : 'N/A',
+      });
+      console.log('[REPORTS] Oldest report:', {
+        keyword: oldest.keyword,
+        created_at: oldest.created_at,
+        date: oldest.created_at ? new Date(oldest.created_at).toLocaleString('ko-KR') : 'N/A',
+      });
+    } else {
+      console.log('[REPORTS] No reports found');
+    }
+
     return NextResponse.json({ reports: reports || [] });
   } catch (error) {
     console.error('[REPORTS] Error:', error);

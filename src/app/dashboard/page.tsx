@@ -74,20 +74,42 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchReports();
+    
+    // 페이지가 포커스를 받을 때마다 리포트 목록 새로고침
+    const handleFocus = () => {
+      fetchReports();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const fetchReports = async () => {
     try {
-      const response = await fetch('/api/reports', {
+      // 타임스탬프를 쿼리 파라미터로 추가하여 캐시 무효화
+      const response = await fetch(`/api/reports?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       });
       const data = await response.json();
 
       if (response.ok) {
-        setReports(data.reports || []);
+        const fetchedReports = data.reports || [];
+        console.log('[DASHBOARD] Fetched reports:', fetchedReports.length);
+        if (fetchedReports.length > 0) {
+          const latest = fetchedReports[0];
+          console.log('[DASHBOARD] Latest report:', {
+            keyword: latest.keyword,
+            created_at: latest.created_at,
+            date: latest.created_at ? new Date(latest.created_at).toLocaleString('ko-KR') : 'N/A',
+          });
+        }
+        setReports(fetchedReports);
       }
     } catch (error) {
       console.error('Failed to fetch reports:', error);
