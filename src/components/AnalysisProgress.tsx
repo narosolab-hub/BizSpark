@@ -9,11 +9,13 @@ interface AnalysisProgressProps {
 }
 
 const ANALYSIS_STEPS = [
-  { id: 1, message: '트렌드 데이터 수집 중', icon: '🔍', duration: 2000 },
-  { id: 2, message: '관련 뉴스 분석 중', icon: '📰', duration: 2000 },
-  { id: 3, message: 'AI가 시장을 분석하고 있습니다', icon: '🧠', duration: 4000 },
-  { id: 4, message: '사업 아이디어 생성 중', icon: '💡', duration: 3000 },
-  { id: 5, message: '최종 보고서 작성 중', icon: '📊', duration: 2000 },
+  { id: 1, message: '글로벌 트렌드 및 최신 검색 데이터 분석 중', icon: '🔍', duration: 3000 },
+  { id: 2, message: '관련 뉴스 및 시장 동향 심층 분석 중', icon: '📰', duration: 3000 },
+  { id: 3, message: '경쟁사별 강점과 숨겨진 약점, 성공 요인을 정밀 해부 중', icon: '🎯', duration: 8000 },
+  { id: 4, message: '딥러닝 기반의 혁신적인 사업 아이디어를 구상 중', icon: '💡', duration: 15000 },
+  { id: 5, message: '시장 침투 전략 및 30일 실행 로드맵 최종 작성 중', icon: '📊', duration: 10000 },
+  { id: 6, message: 'AI 코파일럿 프롬프트 및 실행 가이드 생성 중', icon: '🚀', duration: 8000 },
+  { id: 7, message: '거의 다 됐습니다! 최종 검토 중...', icon: '✨', duration: 5000 },
 ];
 
 export default function AnalysisProgress({ keyword }: AnalysisProgressProps) {
@@ -123,7 +125,7 @@ export default function AnalysisProgress({ keyword }: AnalysisProgressProps) {
         {/* 하단 안내 - 모바일 최적화 */}
         <div className="mt-8 sm:mt-12 text-center px-4">
           <p className="text-xs sm:text-sm text-gray-500">
-            분석에는 약 30초~1분 정도 소요됩니다
+            고품질 분석을 위해 약 1분 정도 소요됩니다
           </p>
         </div>
       </div>

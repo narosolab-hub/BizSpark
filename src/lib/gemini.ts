@@ -248,11 +248,11 @@ export async function analyzeBusinessIdea(
 
     let result;
     try {
-      // Gemini API 호출에 타임아웃 설정 (최대 20초)
+      // Gemini API 호출에 타임아웃 설정 (최대 60초)
       result = await Promise.race([
         model.generateContent(prompt),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Gemini API timeout')), 20000)
+          setTimeout(() => reject(new Error('Gemini API timeout')), 60000)
         ),
       ]) as any;
     } catch (modelError: any) {
