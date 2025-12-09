@@ -314,8 +314,8 @@ export default function ReportView({ report }: ReportViewProps) {
 
           {/* 경쟁 환경 - 모바일 카드, 데스크톱 테이블 */}
           <Section title="경쟁 환경" icon={<Target className="w-4 h-4 sm:w-5 sm:h-5" />}>
-            {/* 모바일: 카드 형식 */}
-            <div className="block sm:hidden space-y-3">
+            {/* 모바일: 카드 형식 - 모바일에서만 표시 */}
+            <div className="block sm:hidden space-y-3 -mx-4 sm:mx-0 px-4 sm:px-0">
               {analysis.competitors.map((competitor, idx) => (
                 <div
                   key={idx}
@@ -358,7 +358,7 @@ export default function ReportView({ report }: ReportViewProps) {
               ))}
             </div>
 
-            {/* 데스크톱: 테이블 형식 */}
+            {/* 데스크톱: 테이블 형식 - 데스크톱에서만 표시 */}
             <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
               <div className="inline-block min-w-full align-middle">
                 <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
