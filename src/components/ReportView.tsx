@@ -566,7 +566,7 @@ export default function ReportView({ report }: ReportViewProps) {
             >
               <div className="space-y-4 sm:space-y-5">
                 {['시장 진입', '제품 구체화', '리스크 완화'].map((category) => {
-                  const prompts = analysis.aiCopilotPrompts.filter((p) => p.category === category);
+                  const prompts = analysis.aiCopilotPrompts?.filter((p) => p.category === category) || [];
                   if (prompts.length === 0) return null;
                   return (
                     <div key={category} className="space-y-3 sm:space-y-4">
