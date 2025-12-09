@@ -38,27 +38,14 @@ export async function getRecentNews(keyword: string): Promise<NewsItem[]> {
 }
 
 /**
- * 통합 뉴스 검색 (Naver + NewsAPI)
+ * @deprecated NewsAPI만 사용하므로 이 함수는 더 이상 사용하지 않습니다.
+ * 대신 getRecentNews()를 직접 사용하세요.
  */
 export async function getIntegratedNews(
   keyword: string,
-  naverNews: NewsItem[]
+  _naverNews: NewsItem[] // 사용하지 않음
 ): Promise<NewsItem[]> {
-  const newsApiNews = await getRecentNews(keyword);
-
-  // 중복 제거 및 병합
-  const allNews = [...naverNews, ...newsApiNews];
-  const uniqueNews = allNews.reduce((acc: NewsItem[], current) => {
-    const exists = acc.find((item) => item.title === current.title);
-    if (!exists) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
-
-  // 최신순 정렬 후 상위 15개 반환
-  return uniqueNews
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, 15);
+  // NewsAPI만 사용
+  return await getRecentNews(keyword);
 }
 

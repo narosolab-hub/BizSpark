@@ -149,16 +149,32 @@ export async function analyzeBusinessIdea(
   }
 
   try {
-    // v1beta API에서 지원되는 모델 사용
-    // gemini-1.5-pro는 v1beta에서 지원되고 무료 티어에서도 사용 가능
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    // v1beta API에서 지원되는 안정적인 모델 사용
+    // gemini-1.5-flash는 가장 안정적이고 무료 티어에서도 사용 가능
+    // 여러 모델을 시도할 수 있도록 fallback 로직 포함
+    let model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    let modelName = 'gemini-1.5-flash';
 
     const prompt = createAnalysisPrompt(keyword, trendData, newsData);
 
     console.log('[GEMINI] Starting analysis for:', keyword);
-    console.log('[GEMINI] Using model: gemini-1.5-pro (v1beta supported, free tier available)');
+    console.log('[GEMINI] Using model: gemini-1.5-flash (stable, free tier supported)');
 
-    const result = await model.generateContent(prompt);
+    let result;
+    try {
+      result = await model.generateContent(prompt);
+    } catch (modelError: any) {
+      // 404 에러인 경우 다른 모델 시도
+      if (modelError?.message?.includes('404') || modelError?.message?.includes('not found')) {
+        console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-pro...`);
+        model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        modelName = 'gemini-pro';
+        result = await model.generateContent(prompt);
+      } else {
+        throw modelError;
+      }
+    }
+
     const text = result.response.text();
 
     console.log('[GEMINI] Response received, parsing JSON...');
@@ -181,6 +197,12 @@ export async function analyzeBusinessIdea(
       details: error?.response?.data || error?.details,
       stack: error?.stack,
     });
+    
+    // 404 에러인 경우 더 명확한 메시지 제공
+    if (error?.message?.includes('404') || error?.message?.includes('not found')) {
+      throw new Error('Gemini 모델을 찾을 수 없습니다. API 키 권한을 확인하거나 다른 모델을 사용해주세요.');
+    }
+    
     throw error;
   }
 }

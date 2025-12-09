@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
 import { analyzeBusinessIdea } from '@/lib/gemini';
-import { getNaverTrends, getNaverNews } from '@/lib/datalab';
+import { getNaverTrends } from '@/lib/datalab';
 import { getGoogleTrends } from '@/lib/trends';
-import { getIntegratedNews } from '@/lib/news';
+import { getRecentNews } from '@/lib/news';
 import { APIError, handleAPIError } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     // 1. 데이터 수집 (병렬 처리, 개별 에러 핸들링)
     let naverTrends = null;
     let googleTrends = null;
-    let naverNews: any[] = [];
 
     try {
       const results = await Promise.allSettled([
@@ -61,15 +60,10 @@ export async function POST(request: NextRequest) {
           console.error('[ANALYZE] Google trends failed:', err);
           return null;
         }),
-        getNaverNews(keyword).catch((err) => {
-          console.error('[ANALYZE] Naver news failed:', err);
-          return [];
-        }),
       ]);
 
       naverTrends = results[0].status === 'fulfilled' ? results[0].value : null;
       googleTrends = results[1].status === 'fulfilled' ? results[1].value : null;
-      naverNews = results[2].status === 'fulfilled' ? results[2].value : [];
     } catch (error) {
       console.error('[ANALYZE] Data collection error:', error);
       // 데이터 수집 실패해도 계속 진행
@@ -78,17 +72,16 @@ export async function POST(request: NextRequest) {
     console.log('[ANALYZE] Data collection completed:', {
       hasNaverTrends: !!naverTrends,
       hasGoogleTrends: !!googleTrends,
-      naverNewsCount: naverNews.length,
     });
 
-    // 2. 뉴스 통합
+    // 2. 뉴스 수집 (NewsAPI만 사용)
     let newsData: any[] = [];
     try {
-      newsData = await getIntegratedNews(keyword, naverNews);
-      console.log('[ANALYZE] News integration completed, count:', newsData.length);
+      newsData = await getRecentNews(keyword);
+      console.log('[ANALYZE] News collection completed, count:', newsData.length);
     } catch (error) {
-      console.error('[ANALYZE] News integration failed:', error);
-      newsData = naverNews; // Naver 뉴스라도 사용
+      console.error('[ANALYZE] News collection failed:', error);
+      newsData = []; // 뉴스 수집 실패 시 빈 배열
     }
 
     // 3. AI 분석

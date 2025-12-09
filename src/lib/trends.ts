@@ -22,16 +22,27 @@ export async function getGoogleTrends(keyword: string): Promise<GoogleTrendData 
       return null;
     }
 
+    // HTML 응답 감지 (Google이 봇을 차단한 경우)
+    if (result.trim().startsWith('<') || result.includes('<html')) {
+      console.warn('[GOOGLE] Received HTML instead of JSON (likely blocked by Google)');
+      return null;
+    }
+
     console.log('[GOOGLE] Trends data received, parsing JSON...');
     const parsed = JSON.parse(result);
     console.log('[GOOGLE] Trends data parsed successfully');
     return parsed;
   } catch (error: any) {
-    console.error('[GOOGLE] Trends Error:', {
-      message: error?.message,
-      stack: error?.stack,
-      response: typeof error?.response === 'string' ? error.response.substring(0, 200) : error?.response,
-    });
+    // JSON 파싱 에러인 경우 HTML 응답일 가능성
+    if (error?.message?.includes('Unexpected token') && error?.message?.includes('<')) {
+      console.warn('[GOOGLE] Google Trends API returned HTML instead of JSON. This may be due to rate limiting or bot detection.');
+    } else {
+      console.error('[GOOGLE] Trends Error:', {
+        message: error?.message,
+        stack: error?.stack,
+        response: typeof error?.response === 'string' ? error.response.substring(0, 200) : error?.response,
+      });
+    }
     return null;
   }
 }

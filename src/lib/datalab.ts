@@ -87,12 +87,30 @@ export async function getNaverNews(keyword: string) {
       publishedAt: item.pubDate,
     }));
   } catch (error: any) {
-    console.error('[NAVER] News API Error:', {
-      message: error?.message,
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      data: error?.response?.data,
-    });
+    const status = error?.response?.status;
+    const errorData = error?.response?.data;
+    
+    // 401 에러인 경우 상세 로그
+    if (status === 401) {
+      console.error('[NAVER] News API 401 Unauthorized:', {
+        message: error?.message,
+        status,
+        statusText: error?.response?.statusText,
+        errorCode: errorData?.errorCode,
+        errorMessage: errorData?.errorMessage,
+      });
+      console.warn('[NAVER] ⚠️ Naver News API 인증 실패. 네이버 개발자 센터에서 다음을 확인하세요:');
+      console.warn('[NAVER] 1. API 키(Client ID/Secret)가 올바른지 확인');
+      console.warn('[NAVER] 2. "검색" API 권한이 활성화되어 있는지 확인');
+      console.warn('[NAVER] 3. 애플리케이션 상태가 "운영"인지 확인');
+    } else {
+      console.error('[NAVER] News API Error:', {
+        message: error?.message,
+        status,
+        statusText: error?.response?.statusText,
+        data: errorData,
+      });
+    }
     return [];
   }
 }
