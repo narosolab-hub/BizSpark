@@ -29,6 +29,13 @@ export default function Home() {
       }
 
       if (data.reportId) {
+        // 사용자별 리포트 관리: localStorage에 리포트 ID 저장
+        const myReportIds = JSON.parse(localStorage.getItem('myReportIds') || '[]');
+        if (!myReportIds.includes(data.reportId)) {
+          myReportIds.push(data.reportId);
+          localStorage.setItem('myReportIds', JSON.stringify(myReportIds));
+          console.log('[HOME] Saved report ID to localStorage:', data.reportId);
+        }
         router.push(`/analyze/${data.reportId}`);
       } else {
         alert('분석이 완료되었으나 저장에 실패했습니다.');

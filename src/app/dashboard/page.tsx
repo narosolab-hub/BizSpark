@@ -80,6 +80,7 @@ export default function DashboardPage() {
 
   const fetchReports = useCallback(async () => {
     try {
+      setLoading(true);
       // 타임스탬프를 쿼리 파라미터로 추가하여 캐시 무효화
       const response = await fetch(`/api/reports?t=${Date.now()}`, {
         cache: 'no-store',
@@ -91,17 +92,27 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (response.ok) {
-        const fetchedReports = data.reports || [];
-        console.log('[DASHBOARD] Fetched reports:', fetchedReports.length);
-        if (fetchedReports.length > 0) {
-          const latest = fetchedReports[0];
+        const allReports = data.reports || [];
+        
+        // 사용자별 리포트 필터링 (localStorage에 저장된 내 리포트 ID만 표시)
+        const myReportIds = JSON.parse(localStorage.getItem('myReportIds') || '[]');
+        const myReports = myReportIds.length > 0 
+          ? allReports.filter((report: ReportListItem) => myReportIds.includes(report.id))
+          : allReports; // localStorage가 비어있으면 모든 리포트 표시 (기존 동작 유지)
+        
+        console.log('[DASHBOARD] All reports:', allReports.length);
+        console.log('[DASHBOARD] My report IDs:', myReportIds.length);
+        console.log('[DASHBOARD] Filtered reports:', myReports.length);
+        
+        if (myReports.length > 0) {
+          const latest = myReports[0];
           console.log('[DASHBOARD] Latest report:', {
             keyword: latest.keyword,
             created_at: latest.created_at,
             date: latest.created_at ? new Date(latest.created_at).toLocaleString('ko-KR') : 'N/A',
           });
         }
-        setReports(fetchedReports);
+        setReports(myReports);
       }
     } catch (error) {
       console.error('Failed to fetch reports:', error);
@@ -155,9 +166,15 @@ export default function DashboardPage() {
       });
 
       if (response.ok) {
+        // 프론트에서 즉시 삭제 반영
         setReports((prev) => prev.filter((r) => r.id !== id));
+        // localStorage에서도 제거 (사용자별 리포트 관리용)
+        const myReportIds = JSON.parse(localStorage.getItem('myReportIds') || '[]');
+        const updatedIds = myReportIds.filter((reportId: string) => reportId !== id);
+        localStorage.setItem('myReportIds', JSON.stringify(updatedIds));
       } else {
-        alert('삭제에 실패했습니다.');
+        const data = await response.json();
+        alert(data.error || '삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to delete report:', error);
@@ -183,6 +200,13 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (response.ok && data.reportId) {
+        // 사용자별 리포트 관리: localStorage에 리포트 ID 저장
+        const myReportIds = JSON.parse(localStorage.getItem('myReportIds') || '[]');
+        if (!myReportIds.includes(data.reportId)) {
+          myReportIds.push(data.reportId);
+          localStorage.setItem('myReportIds', JSON.stringify(myReportIds));
+          console.log('[DASHBOARD] Saved report ID to localStorage:', data.reportId);
+        }
         // 리포트 목록 즉시 새로고침하여 최신 리포트 반영
         await fetchReports();
         router.push(`/analyze/${data.reportId}`);
@@ -222,11 +246,21 @@ export default function DashboardPage() {
       {/* 메인 */}
       <main className="px-4 sm:px-6 py-6 sm:py-10">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">내 리포트</h1>
-            <p className="text-sm sm:text-base text-gray-400">
-              생성한 시장 분석 리포트를 확인하세요
-            </p>
+          <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">내 리포트</h1>
+              <p className="text-sm sm:text-base text-gray-400">
+                생성한 시장 분석 리포트를 확인하세요
+              </p>
+            </div>
+            <button
+              onClick={() => fetchReports()}
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-violet-600 text-white hover:bg-violet-700 active:scale-95 transition-all text-sm sm:text-base whitespace-nowrap flex-shrink-0"
+              title="최신 리포트 새로고침"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">새로고침</span>
+            </button>
           </div>
 
           {loading ? (

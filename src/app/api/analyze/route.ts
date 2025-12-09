@@ -166,7 +166,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('[ANALYZE] Analysis completed, reportId:', report.id);
+    // 리포트 ID를 응답에 포함하여 클라이언트에서 localStorage에 저장할 수 있도록 함
+    console.log('[ANALYZE] Report saved with ID:', report.id);
 
     return NextResponse.json({
       reportId: report.id,
