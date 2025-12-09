@@ -149,27 +149,38 @@ export async function analyzeBusinessIdea(
   }
 
   try {
-    // v1beta API에서 지원되는 안정적인 모델 사용
-    // gemini-1.5-flash는 가장 안정적이고 무료 티어에서도 사용 가능
+    // 최신 모델 사용 (gemini-2.5 시리즈)
     // 여러 모델을 시도할 수 있도록 fallback 로직 포함
-    let model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    let modelName = 'gemini-1.5-flash';
+    let model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    let modelName = 'gemini-2.5-flash';
 
     const prompt = createAnalysisPrompt(keyword, trendData, newsData);
 
     console.log('[GEMINI] Starting analysis for:', keyword);
-    console.log('[GEMINI] Using model: gemini-1.5-flash (stable, free tier supported)');
+    console.log('[GEMINI] Using model: gemini-2.5-flash (latest model)');
 
     let result;
     try {
       result = await model.generateContent(prompt);
     } catch (modelError: any) {
-      // 404 에러인 경우 다른 모델 시도
+      // 404 에러인 경우 다른 최신 모델 시도
       if (modelError?.message?.includes('404') || modelError?.message?.includes('not found')) {
-        console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-pro...`);
-        model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-        modelName = 'gemini-pro';
-        result = await model.generateContent(prompt);
+        console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-2.5-pro...`);
+        try {
+          model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+          modelName = 'gemini-2.5-pro';
+          result = await model.generateContent(prompt);
+        } catch (secondError: any) {
+          // gemini-2.5-pro도 실패하면 gemini-1.5-flash로 fallback
+          if (secondError?.message?.includes('404') || secondError?.message?.includes('not found')) {
+            console.warn(`[GEMINI] Model ${modelName} not found, trying gemini-1.5-flash...`);
+            model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            modelName = 'gemini-1.5-flash';
+            result = await model.generateContent(prompt);
+          } else {
+            throw secondError;
+          }
+        }
       } else {
         throw modelError;
       }
