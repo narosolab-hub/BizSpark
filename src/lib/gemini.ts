@@ -20,81 +20,21 @@ function createAnalysisPrompt(
   trendData: TrendData,
   newsData: NewsItem[]
 ): string {
-  // 뉴스 데이터를 최대 3개로 제한하고 제목만 사용하여 프롬프트 크기 대폭 축소
-  const limitedNews = newsData.slice(0, 3).map(news => news.title).join(' | ');
-  
-  // 트렌드 데이터 요약 (전체 데이터 대신 핵심만)
-  const trendSummary = {
-    hasNaver: !!trendData.naver,
-    hasGoogle: !!trendData.google,
-  };
+  // 뉴스 데이터를 최대 2개로 제한하고 제목만 사용 (더 축소)
+  const limitedNews = newsData.slice(0, 2).map(news => news.title).join(' | ');
 
-  return `당신은 시장 분석 전문가입니다. 키워드 "${keyword}"에 대한 비즈니스 분석을 JSON 형식으로 제공하세요.
+  return `키워드 "${keyword}"에 대한 비즈니스 분석을 JSON으로 제공하세요.
 
-[입력 데이터]
-키워드: ${keyword}
-트렌드: ${trendSummary.hasNaver ? '네이버 트렌드 있음' : ''} ${trendSummary.hasGoogle ? '구글 트렌드 있음' : ''}
-뉴스: ${limitedNews || '없음'}
-
-[요구사항]
-- 경쟁사는 실제 회사명 사용 (당근마켓, 배달의민족, 토스 등)
+요구사항:
+- 경쟁사는 실제 회사명 사용
 - 사업 아이디어 3개: SaaS/디지털, HaaS/제품, 서비스/콘텐츠 각 1개 이상
 - 비즈니스 모델 2개 이상 (SaaS 구독 외 다른 유형 포함)
-- 로드맵은 Day 단위 액션 아이템
+- 로드맵은 Day 단위
 - 리스크는 실행 계획 포함 (지표, 기간)
 - AI 프롬프트: 시장진입/제품구체화/리스크완화 각 1~2개
 
-다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
-
-{
-  "keyInsights": ["인사이트1", "인사이트2", "인사이트3"],
-  "marketOverview": {
-    "definition": "시장 정의",
-    "marketSize": "시장 규모 (숫자 포함)",
-    "trend": "시장 트렌드"
-  },
-  "targetCustomers": {
-    "coreGroup": "핵심 그룹 (20자 이내)",
-    "segments": ["세그먼트1", "세그먼트2", "세그먼트3"],
-    "painPoints": ["페인포인트1", "페인포인트2", "페인포인트3", "페인포인트4", "페인포인트5"]
-  },
-  "competitors": [
-    {"name": "경쟁사1", "serviceScope": "서비스 범위", "priceRange": "가격대", "coreUSP": "USP", "strength": "강점", "weakness": "약점"},
-    {"name": "경쟁사2", "serviceScope": "서비스 범위", "priceRange": "가격대", "coreUSP": "USP", "strength": "강점", "weakness": "약점"},
-    {"name": "경쟁사3", "serviceScope": "서비스 범위", "priceRange": "가격대", "coreUSP": "USP", "strength": "강점", "weakness": "약점"}
-  ],
-  "businessIdeas": [
-    {"title": "아이디어1", "type": "SaaS/디지털", "description": "설명", "usp": "차별화 포인트", "targetCustomer": "타겟", "physicalTouchpoint": "물리적 접점"},
-    {"title": "아이디어2", "type": "HaaS/제품", "description": "설명", "usp": "차별화 포인트", "targetCustomer": "타겟", "physicalTouchpoint": "물리적 접점"},
-    {"title": "아이디어3", "type": "서비스/콘텐츠", "description": "설명", "usp": "차별화 포인트", "targetCustomer": "타겟", "physicalTouchpoint": "물리적 접점"}
-  ],
-  "mvpFeatures": ["기능1", "기능2", "기능3", "기능4", "기능5"],
-  "businessModel": {
-    "options": [
-      {"type": "모델1", "pricing": "가격 정책", "rationale": "선택 근거"},
-      {"type": "모델2", "pricing": "가격 정책", "rationale": "선택 근거"}
-    ]
-  },
-  "roadmap": {
-    "week1": ["Day 1-2: 할 일", "Day 3-4: 할 일", "Day 5-7: 할 일"],
-    "week2": ["Day 8-10: 할 일", "Day 11-12: 할 일", "Day 13-14: 할 일"],
-    "week3": ["Day 15-17: 할 일", "Day 18-19: 할 일", "Day 20-21: 할 일"],
-    "week4": ["Day 22-24: 할 일", "Day 25-27: 할 일", "Day 28-30: 할 일"]
-  },
-  "risks": [
-    {"risk": "리스크1", "solution": "대응 방안", "actionPlan": "실행 계획 (지표, 기간 포함)"},
-    {"risk": "리스크2", "solution": "대응 방안", "actionPlan": "실행 계획 (지표, 기간 포함)"},
-    {"risk": "리스크3", "solution": "대응 방안", "actionPlan": "실행 계획 (지표, 기간 포함)"}
-  ],
-  "aiCopilotPrompts": [
-    {"category": "시장 진입", "title": "프롬프트1", "prompt": "프롬프트 템플릿"},
-    {"category": "시장 진입", "title": "프롬프트2", "prompt": "프롬프트 템플릿"},
-    {"category": "제품 구체화", "title": "프롬프트3", "prompt": "프롬프트 템플릿"},
-    {"category": "제품 구체화", "title": "프롬프트4", "prompt": "프롬프트 템플릿"},
-    {"category": "리스크 완화", "title": "프롬프트5", "prompt": "프롬프트 템플릿"},
-    {"category": "리스크 완화", "title": "프롬프트6", "prompt": "프롬프트 템플릿"}
-  ]
-}`;
+JSON 형식 (다른 텍스트 없이):
+{"keyInsights":["인사이트1","인사이트2","인사이트3"],"marketOverview":{"definition":"시장 정의","marketSize":"시장 규모(숫자)","trend":"시장 트렌드"},"targetCustomers":{"coreGroup":"핵심 그룹(20자 이내)","segments":["세그먼트1","세그먼트2","세그먼트3"],"painPoints":["페인포인트1","페인포인트2","페인포인트3","페인포인트4","페인포인트5"]},"competitors":[{"name":"경쟁사1","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사2","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사3","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"}],"businessIdeas":[{"title":"아이디어1","type":"SaaS/디지털","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어2","type":"HaaS/제품","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어3","type":"서비스/콘텐츠","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"}],"mvpFeatures":["기능1","기능2","기능3","기능4","기능5"],"businessModel":{"options":[{"type":"모델1","pricing":"가격 정책","rationale":"선택 근거"},{"type":"모델2","pricing":"가격 정책","rationale":"선택 근거"}]},"roadmap":{"week1":["Day 1-2: 할 일","Day 3-4: 할 일","Day 5-7: 할 일"],"week2":["Day 8-10: 할 일","Day 11-12: 할 일","Day 13-14: 할 일"],"week3":["Day 15-17: 할 일","Day 18-19: 할 일","Day 20-21: 할 일"],"week4":["Day 22-24: 할 일","Day 25-27: 할 일","Day 28-30: 할 일"]},"risks":[{"risk":"리스크1","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"},{"risk":"리스크2","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"},{"risk":"리스크3","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"}],"aiCopilotPrompts":[{"category":"시장 진입","title":"프롬프트1","prompt":"프롬프트 템플릿"},{"category":"시장 진입","title":"프롬프트2","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트3","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트4","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트5","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트6","prompt":"프롬프트 템플릿"}]}`;
 }
 
 /**
@@ -124,11 +64,11 @@ export async function analyzeBusinessIdea(
 
     let result;
     try {
-      // Gemini API 호출에 타임아웃 설정 (최대 50초)
+      // Gemini API 호출에 타임아웃 설정 (최대 120초)
       result = await Promise.race([
         model.generateContent(prompt),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Gemini API timeout')), 50000)
+          setTimeout(() => reject(new Error('Gemini API timeout')), 120000)
         ),
       ]) as any;
     } catch (modelError: any) {
