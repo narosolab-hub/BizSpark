@@ -211,14 +211,6 @@ export async function POST(request: NextRequest) {
         error: dbError?.message || 'Unknown database error',
       });
     }
-
-    // 리포트 ID를 응답에 포함하여 클라이언트에서 localStorage에 저장할 수 있도록 함
-    console.log('[ANALYZE] Report saved with ID:', report.id);
-
-    return NextResponse.json({
-      reportId: report.id,
-      status: 'completed',
-    });
   } catch (error) {
     console.error('[ANALYZE] Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
