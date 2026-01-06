@@ -14,7 +14,6 @@ import {
   Lightbulb,
   Rocket,
   DollarSign,
-  Calendar,
   AlertTriangle,
   ArrowLeft,
   Menu,
@@ -547,29 +546,6 @@ export default function ReportView({ report }: ReportViewProps) {
                   </div>
                 </div>
               )}
-            </div>
-          </Section>
-
-          {/* 30일 로드맵 */}
-          <Section title="30일 실행 로드맵" icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5" />}>
-            <div className="space-y-4 sm:space-y-6">
-              {(Object.entries(analysis.roadmap) as [string, string[]][]).map(([week, tasks]) => (
-                <div key={week}>
-                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3 capitalize">
-                    {week.replace('week', 'Week ')}
-                  </h4>
-                  <ul className="space-y-2">
-                    {tasks?.map((task: any, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded bg-violet-100 text-violet-600 flex items-center justify-center text-xs mt-0.5 flex-shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="text-xs sm:text-sm text-gray-600 leading-relaxed">{task}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
             </div>
           </Section>
 

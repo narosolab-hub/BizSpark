@@ -23,18 +23,18 @@ function createAnalysisPrompt(
   // 뉴스 데이터를 최대 2개로 제한하고 제목만 사용 (더 축소)
   const limitedNews = newsData.slice(0, 2).map(news => news.title).join(' | ');
 
-  return `키워드 "${keyword}"에 대한 비즈니스 분석을 JSON으로 제공하세요.
+  return `키워드 "${keyword}"에 대한 비즈니스 분석을 쉽고 실행 가능하게 작성하세요. 전문 용어는 간단히 설명하되 포함하세요.
 
 요구사항:
-- 경쟁사는 실제 회사명 사용
-- 사업 아이디어 3개: SaaS/디지털, HaaS/제품, 서비스/콘텐츠 각 1개 이상
-- 비즈니스 모델 2개 이상 (SaaS 구독 외 다른 유형 포함)
-- 로드맵은 Day 단위
-- 리스크는 실행 계획 포함 (지표, 기간)
+- 내용은 쉽게 이해할 수 있게, 하지만 전문 용어(예: MVP, USP, CAC, LTV 등)는 설명과 함께 사용
+- 경쟁사는 실제 회사명 사용 (당근마켓, 배달의민족, 토스 등)
+- 사업 아이디어 3개: 다양한 유형 포함 (온라인/오프라인, 제품/서비스/플랫폼 등)
+- 비즈니스 모델 2개 이상: SaaS/HaaS에 국한하지 말고 실행 가능한 모델 제안 (예: 수수료 모델, 제품 판매, 컨설팅, 광고 수익, 커미션 등)
+- 리스크는 실행 가능한 대응 방안 제시
 - AI 프롬프트: 시장진입/제품구체화/리스크완화 각 1~2개
 
 JSON 형식 (다른 텍스트 없이):
-{"keyInsights":["인사이트1","인사이트2","인사이트3"],"marketOverview":{"definition":"시장 정의","marketSize":"시장 규모(숫자)","trend":"시장 트렌드"},"targetCustomers":{"coreGroup":"핵심 그룹(20자 이내)","segments":["세그먼트1","세그먼트2","세그먼트3"],"painPoints":["페인포인트1","페인포인트2","페인포인트3","페인포인트4","페인포인트5"]},"competitors":[{"name":"경쟁사1","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사2","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사3","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"}],"businessIdeas":[{"title":"아이디어1","type":"SaaS/디지털","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어2","type":"HaaS/제품","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어3","type":"서비스/콘텐츠","description":"설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"}],"mvpFeatures":["기능1","기능2","기능3","기능4","기능5"],"businessModel":{"options":[{"type":"모델1","pricing":"가격 정책","rationale":"선택 근거"},{"type":"모델2","pricing":"가격 정책","rationale":"선택 근거"}]},"roadmap":{"week1":["Day 1-2: 할 일","Day 3-4: 할 일","Day 5-7: 할 일"],"week2":["Day 8-10: 할 일","Day 11-12: 할 일","Day 13-14: 할 일"],"week3":["Day 15-17: 할 일","Day 18-19: 할 일","Day 20-21: 할 일"],"week4":["Day 22-24: 할 일","Day 25-27: 할 일","Day 28-30: 할 일"]},"risks":[{"risk":"리스크1","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"},{"risk":"리스크2","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"},{"risk":"리스크3","solution":"대응 방안","actionPlan":"실행 계획(지표,기간)"}],"aiCopilotPrompts":[{"category":"시장 진입","title":"프롬프트1","prompt":"프롬프트 템플릿"},{"category":"시장 진입","title":"프롬프트2","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트3","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트4","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트5","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트6","prompt":"프롬프트 템플릿"}]}`;
+{"keyInsights":["쉽게 이해할 수 있는 인사이트1","인사이트2","인사이트3"],"marketOverview":{"definition":"쉽게 설명한 시장 정의","marketSize":"시장 규모(숫자 포함, 예: 연 1조원)","trend":"시장 트렌드(쉽게 설명)"},"targetCustomers":{"coreGroup":"핵심 그룹(20자 이내)","segments":["세그먼트1","세그먼트2","세그먼트3"],"painPoints":["페인포인트1","페인포인트2","페인포인트3","페인포인트4","페인포인트5"]},"competitors":[{"name":"경쟁사1","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사2","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"},{"name":"경쟁사3","serviceScope":"서비스 범위","priceRange":"가격대","coreUSP":"USP","strength":"강점","weakness":"약점"}],"businessIdeas":[{"title":"아이디어1","type":"SaaS/디지털","description":"쉽게 이해할 수 있는 설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어2","type":"HaaS/제품","description":"쉽게 이해할 수 있는 설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"},{"title":"아이디어3","type":"서비스/콘텐츠","description":"쉽게 이해할 수 있는 설명","usp":"차별화 포인트","targetCustomer":"타겟","physicalTouchpoint":"물리적 접점"}],"mvpFeatures":["기능1","기능2","기능3","기능4","기능5"],"businessModel":{"options":[{"type":"실행 가능한 모델1(예: 거래 수수료, 제품 판매, 컨설팅 등)","pricing":"구체적 가격(예: 거래당 3%, 제품당 5만원 등)","rationale":"왜 이 모델이 적합한지 쉽게 설명"},{"type":"실행 가능한 모델2","pricing":"구체적 가격","rationale":"선택 근거"}]},"risks":[{"risk":"리스크1","solution":"실행 가능한 대응 방안","actionPlan":"구체적 실행 계획"},{"risk":"리스크2","solution":"실행 가능한 대응 방안","actionPlan":"구체적 실행 계획"},{"risk":"리스크3","solution":"실행 가능한 대응 방안","actionPlan":"구체적 실행 계획"}],"aiCopilotPrompts":[{"category":"시장 진입","title":"프롬프트1","prompt":"프롬프트 템플릿"},{"category":"시장 진입","title":"프롬프트2","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트3","prompt":"프롬프트 템플릿"},{"category":"제품 구체화","title":"프롬프트4","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트5","prompt":"프롬프트 템플릿"},{"category":"리스크 완화","title":"프롬프트6","prompt":"프롬프트 템플릿"}]}`;
 }
 
 /**
