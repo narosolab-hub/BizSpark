@@ -15,3 +15,7 @@ CREATE POLICY "Anyone can view all reports"
 -- UPDATE: "Users can update their own reports" (이미 있음)
 -- DELETE: "Users can delete their own reports" (이미 있음)
 
+
+
+
+
