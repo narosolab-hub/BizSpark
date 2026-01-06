@@ -38,7 +38,12 @@ export default function Home() {
         }
         router.push(`/analyze/${data.reportId}`);
       } else {
-        alert('분석이 완료되었으나 저장에 실패했습니다.');
+        // 저장 실패 시 에러 메시지 표시
+        const errorMsg = data.error 
+          ? `분석이 완료되었으나 저장에 실패했습니다.\n\n에러: ${data.error}`
+          : '분석이 완료되었으나 저장에 실패했습니다.';
+        console.error('[HOME] Save failed:', data);
+        alert(errorMsg);
         setLoading(false);
       }
     } catch (error) {

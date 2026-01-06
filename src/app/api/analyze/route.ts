@@ -152,29 +152,63 @@ export async function POST(request: NextRequest) {
 
     // 4. DB 저장
     const supabase = createClient();
-    const { data: report, error } = await supabase
-      .from('reports')
-      .insert({
-        keyword,
-        analysis_result: analysis,
-        trend_data: {
-          naver: naverTrends,
-          google: googleTrends,
-        },
-        news_data: newsData,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    
+    // 분석 결과 크기 확인 (디버깅용)
+    const analysisSize = JSON.stringify(analysis).length;
+    console.log('[ANALYZE] Analysis result size:', analysisSize, 'bytes');
+    
+    try {
+      const { data: report, error } = await supabase
+        .from('reports')
+        .insert({
+          user_id: null, // 비로그인 사용자 허용
+          keyword,
+          analysis_result: analysis,
+          trend_data: {
+            naver: naverTrends,
+            google: googleTrends,
+          },
+          news_data: newsData,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('[SUPABASE] Insert error:', error);
-      // DB 저장 실패해도 분석 결과는 반환
+      if (error) {
+        console.error('[SUPABASE] Insert error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        // DB 저장 실패해도 분석 결과는 반환
+        return NextResponse.json({
+          reportId: null,
+          analysis,
+          status: 'completed',
+          message: '분석은 완료되었으나 저장에 실패했습니다.',
+          error: error.message,
+        });
+      }
+
+      // 리포트 ID를 응답에 포함하여 클라이언트에서 localStorage에 저장할 수 있도록 함
+      console.log('[ANALYZE] Report saved with ID:', report.id);
+      return NextResponse.json({
+        reportId: report.id,
+        status: 'completed',
+      });
+    } catch (dbError: any) {
+      console.error('[SUPABASE] Database error:', {
+        message: dbError?.message,
+        stack: dbError?.stack,
+        error: dbError,
+      });
       return NextResponse.json({
         reportId: null,
         analysis,
         status: 'completed',
         message: '분석은 완료되었으나 저장에 실패했습니다.',
+        error: dbError?.message || 'Unknown database error',
       });
     }
 
